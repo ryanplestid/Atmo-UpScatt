@@ -1,19 +1,47 @@
 #Initialization
-import matplotlib #Package to help with plotting
-from mpl_toolkits import mplot3d
-from matplotlib import pyplot as plt
-import numpy as np #Package for array functions
-from numpy import pi as pi
-from matplotlib import ticker, cm
+
+#### Rcomment: I DONT THINK YOU NEED THESE 
+
+#import matplotlib #Package to help with plotting
+#from mpl_toolkits import mplot3d
+#from matplotlib import pyplot as plt
+#from matplotlib import ticker, cm
+
+
 import math
+import numpy as np #Package for array functions
 import scipy as sp
+from numpy import pi as pi
 from scipy import special as spc
 from numpy import random as rand
 from numpy import sin, cos
 
+
+
 def main():
     print("Hello World")
     return 0
+
+# Create a global dictionary of Fermi parameters
+# Enter two numbers(Z A) as a string, separated by a space
+# Form Factors found from De Vries, De Jager, and De Vries (1987)
+# Sodium does not have a Fermi Form Factor
+Fermi_Dict = dict({"8 16":dict({"c":2.608, "z": 0.513, "w": -0.051}),
+                   "12 24":dict({"c":2.98,"z":0.551, "w": 0}),
+                   "13 27":dict({"c":2.84, "z":0.569, "w":0}),
+                   "14 28":dict({"c":3.340, "z": 0.580, "w": -0.233}),
+                   "19 39":dict({"c":3.408, "z": 0.585, "w": -0.201}),
+                   "20 40":dict({"c":3.766, "z": 0.586, "w":-0.161}),
+                   "22 48":dict({"c":3.843, "z": 0.588, "w": 0}),
+                   "24 52":dict({"c":4.01, "z":0.497,"w":0}),
+                   "25 55":dict({"c":3.89, "z":0.567,"w":0}),
+                   #"26 54":dict({"c":4.075, "z":0.506, "w":0}),
+                   "26 56":dict({"c":4.106, "z": 0.519, "w":0}),
+                   "28 58":dict({"c":4.3092, "z": 0.5169,"w":-0.1308}),
+                   #"28 60":dict({"c":4.4891,"z":0.5369,"w":-0.2668})
+                  })
+
+
 
 
 def Calculate_Fermi_3P_FF2(Fermi_c, Fermi_z, Fermi_w, q_vals_fm):
@@ -36,6 +64,11 @@ def Calculate_Fermi_3P_FF2(Fermi_c, Fermi_z, Fermi_w, q_vals_fm):
         Calculates Form Factor squared and returns it
     '''
     #Constants
+
+    
+    #### Rcomment: I do not think you use e in this function, numpy handles i as 1j
+    
+    
     i = (-1)**0.5
     e = .303 #Elementary charge, Natural Units
     
@@ -47,6 +80,16 @@ def Calculate_Fermi_3P_FF2(Fermi_c, Fermi_z, Fermi_w, q_vals_fm):
 
     #Initialize the values of F^2(q) as 0
     Fermi_FF2 = np.zeros(len(q_vals_fm))
+
+
+
+    #### Rcomment: see if numpy or scipy has a fourier bessel transform built in.
+    ####           it is generally more reliable to use library functions than to
+    ####           code up your own
+    ####
+    ####           I just checked, and it looks like there isn't a base-library solution
+    ####           there is this https://pypi.org/project/hankel/
+
     
     #Calculate F^2(q) at specified values of q
     q_index = 0
@@ -165,24 +208,6 @@ def Find_Helm_Parameters(Zed,Fermi_c,Fermi_z, q_vals, Fermi_w = 0):
         R1 = np.sqrt(Ra**2+(7/3)*pi**2*r0**2 -5*s**2)
     return(R1,s)
 
-# Create a dictionary of Fermi parameters
-# Enter two numbers(Z A) as a string, separated by a space
-# Form Factors found from De Vries, De Jager, and De Vries (1987)
-# Sodium does not have a Fermi Form Factor
-Fermi_Dict = dict({"8 16":dict({"c":2.608, "z": 0.513, "w": -0.051}),
-                   "12 24":dict({"c":2.98,"z":0.551, "w": 0}),
-                   "13 27":dict({"c":2.84, "z":0.569, "w":0}),
-                   "14 28":dict({"c":3.340, "z": 0.580, "w": -0.233}),
-                   "19 39":dict({"c":3.408, "z": 0.585, "w": -0.201}),
-                   "20 40":dict({"c":3.766, "z": 0.586, "w":-0.161}),
-                   "22 48":dict({"c":3.843, "z": 0.588, "w": 0}),
-                   "24 52":dict({"c":4.01, "z":0.497,"w":0}),
-                   "25 55":dict({"c":3.89, "z":0.567,"w":0}),
-                   #"26 54":dict({"c":4.075, "z":0.506, "w":0}),
-                   "26 56":dict({"c":4.106, "z": 0.519, "w":0}),
-                   "28 58":dict({"c":4.3092, "z": 0.5169,"w":-0.1308}),
-                   #"28 60":dict({"c":4.4891,"z":0.5369,"w":-0.2668})
-                  })
 
 #Create a dictionary for the Helm Parameters by fitting the fermi parameters
 #Enter two numbers (Z A) as a string, separted by a space
