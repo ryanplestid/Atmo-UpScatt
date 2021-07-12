@@ -99,6 +99,11 @@ def Full_d_sigma_d_cos_Theta(d, mn, En, cos_Theta, Zeds, R1s, Ss, fracs):
         d_sigma_d_cos_Theta: differential cross section in cm of the scattering
                             (float, same size as En)
     '''
+    #Set differential cross section to 0 if the mass is greater than the energy
+    if mn >= En:
+        d_sigma_d_cos_Theta = 0
+        return(d_sigma_d_cos_Theta)
+    
     #Calculate the transfered momentum
     En_MeV = En *1000  #Neutrino/Lepton Energies in MeV
     mn_MeV = mn*1000  #Lepton mass in MeV
@@ -120,7 +125,7 @@ def Full_d_sigma_d_cos_Theta(d, mn, En, cos_Theta, Zeds, R1s, Ss, fracs):
         s = Ss[Zed_index]  #Skin thickness
         frac = fracs[Zed_index]  #fractional number density of the nucleus
         
-        FF2 = formFactorFit.HelmFF2(q,R1,s) #Form factors^2 for the transferred momentum
+        FF2 = formFactorFit.Helm_FF2(q,R1,s) #Form factors^2 for the transferred momentum
         
         d_sigma_d_cos_Theta += frac * d_sig_d_cos_coh * Zed**2 * FF2
     
