@@ -25,6 +25,11 @@ def decay_length(d,mn,En):
     action:
         Calculates characteristic decay length according to Plestid, 2021
     '''
+    #Set decay length to 0 if the mass is greater than the energy
+    if mn >= En:
+        Lambda = 0
+        return(Lamda)
+    
     R_Earth = 6378.1 * 1000* 100    #Radius of the Earth (cm)
     mn_MeV = mn*1000  #Convert mass to MeV
     En_MeV = En*1000  #Convert energy to MeV
@@ -54,6 +59,11 @@ def d_sigma_d_cos_Theta_coherent(d,mn,En,cos_Theta,Zed):
         Computes the differential cross section in terms of MeV^{-2}, then
         converts it to cm^2
     '''
+    #Setting cross section to 0 if mass is larger than the energy
+    if mn >= En:
+        d_sigma_d_cos_Theta = 0
+        return(d_sigma_d_cos_Theta)
+    
     alpha = 1/137 #Fine structure constant (SI Units)
     En_MeV = En *1000  #Neutrino/Lepton Energies in MeV
     mn_MeV = mn*1000  #Lepton mass in MeV
