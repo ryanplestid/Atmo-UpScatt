@@ -28,7 +28,7 @@ def decay_length(d,mn,En):
     #Set decay length to 0 if the mass is greater than the energy
     if mn >= En:
         Lambda = 0
-        return(Lamda)
+        return(Lambda)
     
     R_Earth = 6378.1 * 1000* 100    #Radius of the Earth (cm)
     mn_MeV = mn*1000  #Convert mass to MeV
