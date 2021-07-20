@@ -1,6 +1,7 @@
 import unittest
 import numpy as np
 from numpy import random as rand
+from numpy import pi
 import matplotlib
 from matplotlib import pyplot as plt
 
@@ -217,6 +218,42 @@ class Testing_Sampling_Functions(unittest.TestCase):
             cos_Theta = cos_Thetas[k]
             new_cos = np.dot(Y-X, X-W) /np.sqrt(np.dot(X-W,X-W) * np.dot(Y-X,Y-X))
             self.assertAlmostEqual(cos_Theta, new_cos, delta = 1e-6)
-
+            
+            
+class Testing_Detector_Functions(unittest.TestCase):
+    #Test that a completely forward (backward) scattered photon
+    #   in the rest frame is still forward (backward) in the lab frame
+    #Also test Energies are correct
+    def test_E_gamma_and_zeta(self):
+        En = 1 #Lepton Energy in GeV
+        mn = 0.1 #Lepton mass in GeV
+        f_cos_zeta_prime = 1
+        b_cos_zeta_prime = -1
+        
+        f_zeta, f_E_gamma = DetectorModule.Calc_Zetas_and_Energies(f_cos_zeta_prime,En,mn)
+        b_zeta, b_E_gamma = DetectorModule.Calc_Zetas_and_Energies(b_cos_zeta_prime, En, mn)
+        
+        self.assertEqual(f_zeta,0)
+        self.assertEqual(b_zeta,pi)
+        self.assertEqual(f_E_gamma, 0.5 * En * (1 + np.sqrt(1 - mn**2/En**2)))
+        self.assertEqual(b_E_gamma, 0.5 * En * (1 - np.sqrt(1 - mn**2/En**2)))
+    
+    #Test that we get the proper angle relative to the detector when we
+    #   have the interaction directly below the detector, and 0 as the
+    #   photon scattering angle
+    def test_phi_det(self):
+        R_Earth = R_Earth = 6378.1 * 1000* 100    #Radius of the Earth (cm)
+        Y = np.array([0,0,R_Earth])
+        X = np.array([[0,1,1]])
+        
+        En = np.array([1]) #Lepton Energy in GeV
+        mn = 0.1 #Lepton mass in GeV
+        cos_zeta_prime = np.array([1])
+        
+        zeta, E_gamma = DetectorModule.Calc_Zetas_and_Energies(cos_zeta_prime,En,mn)
+        
+        cos_phi_det = DetectorModule.Calc_cos_phi_det(Y,X,zeta)
+        
+        self.assertAlmostEqual(cos_phi_det, 1, delta = 1e-6)
 if __name__ == "__main__":
     unittest.main()
