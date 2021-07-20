@@ -154,5 +154,128 @@ def Arbitrary_Scattering_Weight(cos_Theta,cos_vals,frac_diff_cross_sec_vals):
     
     return(w_Theta)
 
+def Sample_Interaction_Locations(Num_Events, Y, R_max):
+    '''
+    Sample locations within the Earth for neutrino dipole interactions
+    
+    args:
+        Num_Events: Number of events that we would like to sample (int)
+        Y: Cartesian coordinates of the detector location in cm (3 element float array)
+        R_max: Maximum distance for which we care about dipole interactions
+            (float array with Num_Events elements)
+    
+    returns:
+        x_vect_vals: Num_Events-by-3 array of the sampled locations for the neutrino
+                dipole interactions in cm
+    '''
+    
+    R_Earth = 6378.1 * 1000* 100    #Radius of the Earth (cm)
+    
+    x_vect_vals = np.zeros((Num_Events,3)) #positions of interactions (cm)
+    needed_indeces = x_vect_vals[:,0] < 1 #indeces for which we still need to assign positions
+    needed_events = Num_Events
+    x_mags = np.zeros(Num_Events)
+    
+    while needed_events > 0:
+        r_primes = np.minimum(2*R_Earth,R_max[needed_indeces]) * (rand.rand(needed_events)**(1/3)) #cm
+        cos_theta_primes = 1 - 2 * rand.rand(needed_events)
+        theta_primes = np.arccos(cos_theta_primes)
+        phi_primes = 2*pi*rand.rand(needed_events)
+
+        #Find the vector from the spherical coordinate vals
+        x_vect_vals[needed_indeces,0] = Y[0] + r_primes*sin(theta_primes)*cos(phi_primes)
+        x_vect_vals[needed_indeces,1] = Y[1] + r_primes*sin(theta_primes)*sin(phi_primes)
+        x_vect_vals[needed_indeces,2] = Y[2] + r_primes*cos(theta_primes)
+        
+        x_mags = np.sqrt(x_vect_vals[:,0]**2 + x_vect_vals[:,1]**2 + x_vect_vals[:,2]**2)
+        needed_indeces = x_mags > R_Earth
+        needed_events = sum(needed_indeces)
+        #print(100 - 100 * needed_events/Num_Events, "% done")
+        
+    return(x_vect_vals)
+
+def weight_positions(Y,R_max):
+    
+    R_Earth = 6378.1 * 1000* 100    #Radius of the Earth (cm)
+    V_Earth = 4*pi/3 * R_Earth**3
+    V_int = 0
+    Y_mag = np.sqrt(np.dot(Y,Y))
+    
+    
+    V_int += 4*pi/3 * R_max**3 * np.heaviside(R_Earth - R_max - Y_mag,1)
+    
+    V_int += 4*pi/3 * R_Earth**3 * np.heaviside(R_max - R_Earth - Y_mag,0)
+    
+    V_int += pi/(12*Y_mag) * ((R_Earth + R_max - Y_mag)**2 
+                      * (Y_mag**2 + 2*Y_mag*(R_Earth+R_max) - 3*(R_Earth - R_max)**2)
+                      *np.heaviside(R_max + Y_mag - R_Earth,0) * np.heaviside(R_Earth + Y_mag - R_max,1))
+    
+    w_V = V_int / V_Earth
+    return(w_V)
+
+def Sample_Neutrino_Entry_Position(X, Y, cos_Theta):
+    
+    '''
+    Samples the location where the neutrino entered the Earth
+    
+    args:
+        X: Cartesian coordinates of the neutrino interaction in cm
+            (number of events-by-3 array of floats)
+        Y: Cartesian coordinates of the detector position in cm
+            (3 element array of floats)
+        cos_Theta: scattering angles for the neutrino interactions
+            (array of floats of length number of events)
+    
+    returns:
+        W: Cartesian coordinates of the neutrino entry position in cm
+            (number of events-by-3 array of floats.)
+    '''
+    v_1_hat = np.zeros((len(cos_Theta),3))
+    v_2_hat = np.zeros((len(cos_Theta),3))
+    v_in_hat = np.zeros((len(cos_Theta),3))
+    psi = 2*pi*rand.rand(len(cos_Theta))
+    Theta = np.arccos(cos_Theta)
+    R_Earth = 6378.1 * 1000* 100    #Radius of the Earth (cm)
+    
+    X_mag = np.sqrt(X[:,0]**2 + X[:,1]**2 + X[:,2]**2)
+    
+    X_minus_Y = X-Y
+    X_minus_Y_mag = np.sqrt(X_minus_Y[:,0]**2 + X_minus_Y[:,1]**2 + X_minus_Y[:,2]**2)
+    
+    X_minus_Y_hat = np.zeros((len(cos_Theta),3))
+    X_minus_Y_hat[:,0] = X_minus_Y[:,0]/X_minus_Y_mag
+    X_minus_Y_hat[:,1] = X_minus_Y[:,1]/X_minus_Y_mag
+    X_minus_Y_hat[:,2] = X_minus_Y[:,2]/X_minus_Y_mag
+    
+    X_cross_Y = np.cross(X,Y)
+    X_cross_Y_mag = np.sqrt(X_cross_Y[:,0]**2 + X_cross_Y[:,1]**2 + X_cross_Y[:,2]**2)
+    
+    
+    v_1_hat[:,0] = X_cross_Y[:,0]/X_cross_Y_mag
+    v_1_hat[:,1] = X_cross_Y[:,1]/X_cross_Y_mag
+    v_1_hat[:,2] = X_cross_Y[:,2]/X_cross_Y_mag
+    
+    
+    v_2_hat = np.cross(X_minus_Y_hat, v_1_hat)
+    
+    v_in_hat[:,0] = (-X_minus_Y[:,0]/X_minus_Y_mag * cos(Theta) + v_1_hat[:,0] * sin(Theta) * cos(psi)
+                     + v_2_hat[:,0] * sin(Theta) * sin(psi) )
+    v_in_hat[:,1] = (-X_minus_Y[:,1]/X_minus_Y_mag * cos(Theta) + v_1_hat[:,1] * sin(Theta) * cos(psi)
+                     + v_2_hat[:,1] * sin(Theta) * sin(psi) )
+    v_in_hat[:,2] = (-X_minus_Y[:,2]/X_minus_Y_mag * cos(Theta) + v_1_hat[:,2] * sin(Theta) * cos(psi)
+                     + v_2_hat[:,2] * sin(Theta) * sin(psi) )
+    
+    
+    
+    X_dot_v_in_hat = X[:,0] * v_in_hat[:,0] + X[:,1] * v_in_hat[:,1] + X[:,2] * v_in_hat[:,2]
+    
+    v_in_mag = X_dot_v_in_hat + np.sqrt(X_dot_v_in_hat +R_Earth**2 - X_mag**2)
+    
+    W = np.zeros((len(cos_Theta),3))
+    W[:,0] = X[:,0] - v_in_hat[:,0] * v_in_mag
+    W[:,1] = X[:,1] - v_in_hat[:,1] * v_in_mag
+    W[:,2] = X[:,2] - v_in_hat[:,2] * v_in_mag
+    return(W)
+
 if __name__ == "__main__":
     main()
