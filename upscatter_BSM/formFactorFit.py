@@ -22,10 +22,22 @@ def main():
     print("Hello World")
     return 0
 
+Element_Dict = dict({"O": "8 16",
+                     "Mn": "12 24",
+                     "Al": "13 27",
+                     "Si": "14 28",
+                     "K": "19 39",
+                     "Ca": "20 40",
+                     "Ti": "22 48",
+                     "Cr": "24 52",
+                     "Mn": "25 55",
+                     "Fe": "26 56",
+                     "Ni": "28 58"})
+
 # Create a global dictionary of Fermi parameters
 # Enter two numbers(Z A) as a string, separated by a space
 # Form Factors found from De Vries, De Jager, and De Vries (1987)
-# Sodium does not have a Fermi Form Factor
+# Sodium and Sulfur does not have a Fermi Form Factor
 Fermi_Dict = dict({"8 16":dict({"c":2.608, "z": 0.513, "w": -0.051}),
                    "12 24":dict({"c":2.98,"z":0.551, "w": 0}),
                    "13 27":dict({"c":2.84, "z":0.569, "w":0}),
@@ -69,7 +81,7 @@ def Calculate_Fermi_3P_FF2(Fermi_c, Fermi_z, Fermi_w, q_vals_fm):
     #### Rcomment: I do not think you use e in this function, numpy handles i as 1j
     
     
-    i = (-1)**0.5
+    i = 1j
     e = .303 #Elementary charge, Natural Units
     
     #Arrays and step sizes for the integration
