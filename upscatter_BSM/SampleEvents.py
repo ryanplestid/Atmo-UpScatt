@@ -4,7 +4,6 @@ def main():
 
 #Initialization
 import numpy as np #Package for array functions
-import formFactorFit
 from numpy import random as rand
 from numpy import sin, cos
 from numpy import pi as pi
@@ -269,7 +268,7 @@ def Sample_Neutrino_Entry_Position(X, Y, cos_Theta):
     
     X_dot_v_in_hat = X[:,0] * v_in_hat[:,0] + X[:,1] * v_in_hat[:,1] + X[:,2] * v_in_hat[:,2]
     
-    v_in_mag = X_dot_v_in_hat + np.sqrt(X_dot_v_in_hat +R_Earth**2 - X_mag**2)
+    v_in_mag = X_dot_v_in_hat + np.sqrt(X_dot_v_in_hat**2 +R_Earth**2 - X_mag**2)
     
     W = np.zeros((len(cos_Theta),3))
     W[:,0] = X[:,0] - v_in_hat[:,0] * v_in_mag
