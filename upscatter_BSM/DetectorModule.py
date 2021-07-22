@@ -152,9 +152,9 @@ def Rate_In_Each_Bin(min_E, max_E, num_E_bins, num_cos_bins, E_gamma, cos_phi_de
             upper_cos = cos_edges[cos_index + 1]
             lower_cos = cos_edges[cos_index]
             
-            rates[E_index,cos_index] = dR *(np.heaviside(E_gamma-lower_E,1) * np.heaviside(upper_E - E_gamma,0)
+            rates[E_index,cos_index] = sum(dR *(np.heaviside(E_gamma-lower_E,1) * np.heaviside(upper_E - E_gamma,0)
                                             *np.heaviside(cos_phi_det-lower_cos,1) 
-                                            * np.heaviside(upper_cos - cos_phi_det,0))
+                                            * np.heaviside(upper_cos - cos_phi_det,0)))
     
     return(E_midpoints,cos_midpoints,rates)
 
