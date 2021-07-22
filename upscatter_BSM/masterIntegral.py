@@ -7,6 +7,9 @@ from numpy import sin, cos, pi
 from numpy import random as rand 
 import scipy as sp
 from scipy import special as spc
+import matplotlib #Package to help with plotting
+from matplotlib import pyplot as plt
+from matplotlib import ticker, cm
 
 #Import modules that we made
 import SampleEvents
@@ -72,6 +75,20 @@ dR = N_d_sigma_d_cos_Thetas * 4 * pi * flux * (P_decs_A_Perp)/(4*pi * Y_minus_X_
 Rate = sum(dR)
 print('Rate', Rate)
 print('decays in 12 years', Rate * 86400 * 365 *12)
+
+#Calculate what is seen by the detector
+cos_zeta_primes = DetectorModule.Calc_cos_zeta_prime(num_Events,alpha_decay)
+zetas, E_gammas = DetectorModule.Calc_Zetas_and_Energies(cos_zeta_primes, Energies, m_N)
+cos_phi_dets = DetectorModule.Calc_cos_phi_det(Y, X_vect_vals, zetas)
+E_midpoints, cos_midpoints, rates = DetectorModule.Rate_In_Each_Bin(0,1.3, 5, 10,E_gammas, cos_phi_dets, dR)
+
+figk, ax = plt.subplots(1,1,figsize = (8,6))
+#levels = np.logspace(-3,3,20)
+cp = ax.contourf(cos_midpoints,E_midpoints,rates*86400*365*12)
+
+figk.colorbar(cp)
+plt.ylabel('Energy (GeV)')
+plt.xlabel('$\cos(\\theta_z)$')
 
 if __name__ == "__main__":
     main()
