@@ -133,6 +133,32 @@ def rho_PREM(r):
         return(0)
 
 
+def rho_Const(r):
+    '''
+     Function that computes density as a function of r 
+     Based on dziewonski et. al (1981) Table IV
+
+    args: 
+         r: Real, valued number representing the radius in
+            units of R_earth =1. r>1 returns 0
+
+    returns; 
+            rho: Real,  Density in g/cm^3 at r 
+    '''
+    # TABLE I, pg 308 of Dziewonski et. al. 1981 
+    r_in_km=6371*r
+
+    if r_in_km < 6371.0:
+        # This differs from the PREM
+        # We just take "rock" everywhere
+        # PREM sets this "Ocean" layer's
+        # desnity to 1.020
+        return(5)
+
+    else:
+        return(0)
+
+
 def n_density(r,dens=rho_PREM):
     '''
      Function that computes density as a function of r 
@@ -187,6 +213,7 @@ def n_density(r,dens=rho_PREM):
     assert(sum(wgt_frac.values()) < 1)
     assert(sum(wgt_frac.values()) > 0.975)
     n_dens={}
+    
     for key in wgt_frac:
         n_dens[key]= dens(r)*wgt_frac[key]/molar_mass[key]*n_avagadro
 
