@@ -1,10 +1,11 @@
 def main():
 
-    
-    x=np.linspace(0,6010,6000)
-    ne=np.sin(x)
+    x=np.linspace(0,6000,6000) # km 
+    ne=2+np.sin(x)   # n_avagadro/cm**3
 
-    print(getProbs(x,ne,0.1))
+    E_nu=0.1 # GeV
+    
+    print(   getProbs(x,ne,E_nu)  )
     
 
 
@@ -48,7 +49,6 @@ rot3=np.array( [[1    ,     0     ,       0      ],
 PMNS=rot3@rot2@rot1
 
 mass_diag=np.diag([0,m21sq,m31sq])
-
 mass_flav=PMNS@mass_diag@(PMNS.conj().T)
 
 
@@ -75,11 +75,15 @@ def getProbs(x,ne,E_nu,anti=False):
            Dictinoary with P_ee etc. Format is { "e->e" : # , ... } 
     '''
     xMax=x[-1:]
+
+
+    assert np.amin(ne) >= 0, "Negative number density not allowed "
+
     
     get_ne=interpolate.interp1d(x,ne)
 
-    def mat_pot(x):
-        return(sqrt(2)*G_F*E_nu*np.diag([get_ne(x),0,0]) )
+    def matt_pot(x):
+        return(sqrt(8)*G_F*E_nu*np.diag([get_ne(x),0,0]) )
 
 
     # Should have units of 1/km
@@ -89,12 +93,14 @@ def getProbs(x,ne,E_nu,anti=False):
     # For matter term:  GeV^{-2} cm^{-3} * avagadro's number = 23.7 km^-1 
     def ham(x, psi):
         if anti:
-            return -1j*(5.07*mass_flav - 23.7*mat_pot(x) )@psi/(2*E_nu)
+            return -1j*(5.07*mass_flav - 23.7*matt_pot(x) )@psi/(2*E_nu)
         else:
-            return -1j*(5.07*mass_flav + 23.7*mat_pot(x) )@psi/(2*E_nu)
+            return -1j*(5.07*mass_flav + 23.7*matt_pot(x) )@psi/(2*E_nu)
 
     probs={}
-    
+
+
+    ### Electron neutrino initial state
     sol = solve_ivp(ham, [0,xMax], [1+0*1j, 0+0*1j, 0])
     final=np.transpose(sol.y)[-1:][0]
     
@@ -114,6 +120,7 @@ def getProbs(x,ne,E_nu,anti=False):
     probs["e->tau"]=np.abs(final[2])**2
 
 
+    ### Muon  neutrino initial state
     sol = solve_ivp(ham, [0,xMax], [0+0*1j, 1+0*1j, 0])
     final=np.transpose(sol.y)[-1:][0]
     
@@ -133,6 +140,7 @@ def getProbs(x,ne,E_nu,anti=False):
     probs["mu->tau"]=np.abs(final[2])**2
 
 
+    ### Tau neutrino initial state
     sol = solve_ivp(ham, [0,xMax], [0+0*1j, 0+0*1j, 1])
     final=np.transpose(sol.y)[-1:][0]
 
