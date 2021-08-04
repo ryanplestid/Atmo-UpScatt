@@ -168,7 +168,7 @@ def Sample_Interaction_Locations(Num_Events, Y, R_max):
                 dipole interactions in cm
     '''
     
-    R_Earth = 6378.1 * 1000* 100    #Radius of the Earth (cm)
+    R_Earth = 1   # 6378.1 * 1000* 100    #Radius of the Earth (cm)
     
     x_vect_vals = np.zeros((Num_Events,3)) #positions of interactions (cm)
     needed_indeces = x_vect_vals[:,0] < 1 #indeces for which we still need to assign positions
@@ -195,7 +195,7 @@ def Sample_Interaction_Locations(Num_Events, Y, R_max):
 
 def weight_positions(Y,R_max):
     
-    R_Earth = 6378.1 * 1000* 100    #Radius of the Earth (cm)
+    R_Earth = 1 #6378.1 * 1000* 100    #Radius of the Earth (cm)
     V_Earth = 4*pi/3 * R_Earth**3
     V_int = 0
     Y_mag = np.sqrt(np.dot(Y,Y))
@@ -234,7 +234,7 @@ def Sample_Neutrino_Entry_Position(X, Y, cos_Theta):
     v_in_hat = np.zeros((len(cos_Theta),3))
     psi = 2*pi*rand.rand(len(cos_Theta))
     Theta = np.arccos(cos_Theta)
-    R_Earth = 6378.1 * 1000* 100    #Radius of the Earth (cm)
+    R_Earth = 1    #6378.1 * 1000* 100    #Radius of the Earth (cm)
     
     X_mag = np.sqrt(X[:,0]**2 + X[:,1]**2 + X[:,2]**2)
     

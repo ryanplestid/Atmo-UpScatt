@@ -36,7 +36,8 @@ E_min,E_max = 0.1, 1e4 #min/max Neutrino Energy, GeV
 power_law = 2 #Guess at energy dependence of atm flux
 flux_name= 'H3a_SIBYLL23C'
 
-R_Earth = 6378.1 * 1000* 100    #Radius of the Earth (cm)
+R_Earth = 1  # use units where R_earth = 1
+#6378.1 * 1000* 100    #Radius of the Earth (cm)
 c = 10 #R_max = c*lambda
 Y = np.array([0,0,R_Earth])     #Location of our detector
 V_det = 300 * (1e6)         #Volume of detector in cm^3

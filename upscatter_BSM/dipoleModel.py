@@ -21,8 +21,7 @@ Element_Dict = dict({"O": "8 16",
                      "Fe": "26 56",
                      "Ni": "28 58"})
 
-#Function to calculate the decay length of
-#   the neutral lepton
+
 def decay_length(d,mn,En):
     '''
     Find the characteristic decay length of the lepton
@@ -33,7 +32,7 @@ def decay_length(d,mn,En):
         En: Energy of the lepton in GeV (float or array of floats)
     
     returns:
-        Lambda: Characteristic decay length in cm (float or array of floats, equal to the number of energies)
+        Lambda: Characteristic decay length in units of R_earth=1 (float or array of floats, equal to the number of energies)
         
     action:
         Calculates characteristic decay length according to Plestid, 2021
@@ -45,7 +44,8 @@ def decay_length(d,mn,En):
         return(Lambda)
     '''
     
-    R_Earth = 6378.1 * 1000* 100    #Radius of the Earth (cm)
+    #R_Earth = 6378.1 * 1000* 100    #Radius of the Earth (cm)
+    R_Earth = 1
     mn_MeV = mn*1000  #Convert mass to MeV
     En_MeV = En*1000  #Convert energy to MeV
     Lambda = (R_Earth * (1.97e-9/d)**2 *(1/mn_MeV)**4 * (En_MeV/10) 
@@ -55,8 +55,7 @@ def decay_length(d,mn,En):
     
     return(Lambda)
 
-#Function to calculate the fully coherent
-#   scattering cross section
+
 def d_sigma_d_cos_Theta_coherent(d,mn,En,cos_Theta,Zed):
     '''
     Determine the differential cross section for a coherent scattering at a specified angle
@@ -69,7 +68,7 @@ def d_sigma_d_cos_Theta_coherent(d,mn,En,cos_Theta,Zed):
         Zed: Atomic number (int)
         
     returns:
-        d_sigma_d_cos_Theta: differential cross section in cm of the scattering
+        d_sigma_d_cos_Theta: differential upscattering cross section in cm^2 
                             (float, same size as En)
     
     actions:
@@ -94,8 +93,7 @@ def d_sigma_d_cos_Theta_coherent(d,mn,En,cos_Theta,Zed):
     
     return(d_sigma_d_cos_Theta)
 
-#Function to calculate the scattering cross section
-#   with form factors and multiple elements
+
 def Full_N_d_sigma_d_cos_Theta(d, mn, En, cos_Theta, Zeds, R1s, Ss, num_dens):
     '''
     Determine the differential cross section for a coherent and incoherent 

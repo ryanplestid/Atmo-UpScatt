@@ -62,9 +62,9 @@ def getProbs(x,ne,E_nu,anti=False):
 
     args: 
 
-         x: Array of positions in unts of km 
+         x: Array of positions in units of rEarth=1
          
-         ne: Array of electron number densities in units of Avagadro's number/cm^3
+         ne: Array of electron number densities in units of cm^-3
 
          E_nu: Energy of neutino in GeV
 
@@ -74,6 +74,13 @@ def getProbs(x,ne,E_nu,anti=False):
 
            Dictinoary with P_ee etc. Format is { "e->e" : # , ... } 
     '''
+
+    rEarth_in_km= 6731
+    n_avagadro  = 6.022*1E23
+    
+    ne=ne/n_avagadro
+    x=x*rEarth_in_km
+    
     xMax=x[-1:]
 
 
@@ -90,7 +97,10 @@ def getProbs(x,ne,E_nu,anti=False):
     #
     # For vacuum term:  eV^2/GeV= 1E-9 eV = 5.07 km^-1
     #
-    # For matter term:  GeV^{-2} cm^{-3} * avagadro's number = 23.7 km^-1 
+    # For matter term:  GeV^{-2} cm^{-3} * avagadro's number = 23.7 km^-1
+    #
+    #
+    
     def ham(x, psi):
         if anti:
             return -1j*(5.07*mass_flav - 23.7*matt_pot(x) )@psi/(2*E_nu)
@@ -104,13 +114,13 @@ def getProbs(x,ne,E_nu,anti=False):
     sol = solve_ivp(ham, [0,xMax], [1+0*1j, 0+0*1j, 0])
     final=np.transpose(sol.y)[-1:][0]
     
-    err=np.abs(np.vdot(final,final))-1
+    err=np.abs(np.vdot(final,final)-1)
 
     if  err>1E-2:
         sol = solve_ivp(ham, [0,xMax], [0+0*1j, 1+0*1j, 0],rtol=1E-6)
         final=np.transpose(sol.y)[-1:][0]
     
-        err=np.abs(np.vdot(final,final))-1
+        err=np.abs(np.vdot(final,final)-1)
 
     assert err  < 1E-2,  "Matter propagation not accurate enough. Error is {}".format(err) 
 
@@ -121,16 +131,16 @@ def getProbs(x,ne,E_nu,anti=False):
 
 
     ### Muon  neutrino initial state
-    sol = solve_ivp(ham, [0,xMax], [0+0*1j, 1+0*1j, 0])
+    sol = solve_ivp(ham, [0,xMax], [0+0*1j, 1+0*1j, 0+0*1j])
     final=np.transpose(sol.y)[-1:][0]
     
-    err=np.abs(np.vdot(final,final))-1
+    err=np.abs(np.vdot(final,final)-1)
 
     if  err>1E-2:
-        sol = solve_ivp(ham, [0,xMax], [0+0*1j, 1+0*1j, 0],rtol=1E-6)
+        sol = solve_ivp(ham, [0,xMax], [0+0*1j, 1+0*1j, 0+0*1j],rtol=1E-6)
         final=np.transpose(sol.y)[-1:][0]
     
-        err=np.abs(np.vdot(final,final))-1
+        err=np.abs(np.vdot(final,final)-1)
     
     assert err  < 1E-2,  "Matter propagation not accurate enough. Error is {}".format(err) 
 
@@ -141,17 +151,17 @@ def getProbs(x,ne,E_nu,anti=False):
 
 
     ### Tau neutrino initial state
-    sol = solve_ivp(ham, [0,xMax], [0+0*1j, 0+0*1j, 1])
+    sol = solve_ivp(ham, [0,xMax], [0+0*1j, 0+0*1j, 1+0*1j])
     final=np.transpose(sol.y)[-1:][0]
 
-    err=np.abs(np.vdot(final,final))-1
+    err=np.abs(np.vdot(final,final)-1)
 
 
     if  err>1E-2:
         sol = solve_ivp(ham, [0,xMax], [0+0*1j, 1+0*1j, 0],rtol=1E-6)
         final=np.transpose(sol.y)[-1:][0]
     
-        err=np.abs(np.vdot(final,final))-1
+        err=np.abs(np.vdot(final,final)-1)
 
     assert err  < 1E-2,  "Matter propagation not accurate enough. Error is {}".format(err) 
 
