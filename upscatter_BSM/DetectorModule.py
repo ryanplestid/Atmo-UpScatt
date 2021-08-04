@@ -71,9 +71,9 @@ def Calc_cos_phi_det(Y, X, zeta):
     Calculates the cosine of the angle between the photon direction and the zenith of the detector
     
     args:
-        Y: 3 element array of the cartesian coordinates of the detector in cm
+        Y: 3 element array of the cartesian coordinates of the detector
         X: n-by-3 array of the Cartesian coordinates of the n neutrino
-            interaction positions in cm
+            interaction positions
         zeta: array of n floats for the scattering angle of the photons in the lab frame
         
     returns:
