@@ -1,4 +1,5 @@
-import numpy as np
+
+1;95;0cimport numpy as np
 import warnings
 
 from  numpy import sin,cos,exp,sqrt,pi
@@ -159,7 +160,7 @@ def rho_Const(r):
         return(0)
 
 
-def n_density(r,dens=rho_PREM):
+def n_density(r, dens=rho_PREM):
     '''
      Function that computes density as a function of r 
      Based on dziewonski et. al (1981) Table IV
@@ -228,7 +229,23 @@ def n_density(r,dens=rho_PREM):
     return(n_dens)
     
 def gen_1d_ne( X1, X2, n_points=100):
+    '''
+    Generates a 1 dimensional density profile of electron number density
+    given two position vectors, X1, X2. 
 
+    args: 
+
+          X1: 3-dim array of coords in units of r_earth =1 
+
+          X2: 3-dim array of coords in units of r_earth =1 
+    
+          n_points=100 [default] number of points in generated 1d array
+
+    returns: 
+
+           1d array of n_e vs x in units of N/cm^3
+
+    '''
     diff_vec=X2-X1
     dist    =sqrt(diff_vec@diff_vec)
     unit_vec=diff_vec/dist
