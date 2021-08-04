@@ -18,15 +18,15 @@ def Calc_cos_zeniths(interaction_locs, entry_locs):
     
     args:
         interaction_locs: n-by-3 array for the cartesian interaction positions of
-                n events in cm (floats)
+                n events in units where R_Earth = 1 (floats)
         entry_locs: n-by-3 array for the cartesian entry positions of
-                n events in cm (floats)
+                n events in units where R_Earth = 1 (floats)
                 
     returns
         cos_zeniths: array of n elements of the cosines of the
                 incoming neutrinos
     '''
-    R_Earth = 6378.1 * 1000* 100    #Radius of the Earth (cm)
+    R_Earth = 1
     
     #Calculate the dot products
     dot_prods = (interaction_locs[:,0]*entry_locs[:,0] + interaction_locs[:,1]*entry_locs[:,1]
