@@ -69,7 +69,7 @@ for d in d_vals:
                         'Cos Theta Power Law':-1,
                         'd (MeV^-1)': d,
                         'm_N (GeV)': m_N,
-                        'Detector Location (cm)':Y}
+                        'Detector Location (r_Earth=1)':Y}
         E_min = max(0.1,m_N + .001) #At least 1 MeV above m_N
         print(m_N, 'GeV')
     
@@ -81,6 +81,8 @@ for d in d_vals:
         Radii = np.sqrt(X_vect_vals[:,0]**2 +X_vect_vals[:,1]**2 + X_vect_vals[:,2]**2) #cm
         rs = Radii/R_Earth #normalized radii
         cos_Thetas = SampleEvents.Sample_cos_Theta(num_Events, epsilon, Theta_max)
+
+        ## Find where each neutrino entered earth's crust
         W_vect_vals = SampleEvents.Sample_Neutrino_Entry_Position(X_vect_vals,Y,cos_Thetas)
         
         #Calculate Flux
@@ -98,7 +100,7 @@ for d in d_vals:
         E_Range = E_max - E_min
         cos_Theta_range = (1-epsilon) - cos(Theta_max)
         Volume = 4*pi/3 * R_Earth ** 3
-        
+
         w_E = SampleEvents.weight_Energy(Energies, E_min, E_max, power_law)
         w_V = SampleEvents.weight_positions(Y,R_maxs)
         w_Theta = SampleEvents.weight_cos_Theta(cos_Thetas,epsilon, Theta_max)
