@@ -159,13 +159,13 @@ def Sample_Interaction_Locations(Num_Events, Y, R_max):
     
     args:
         Num_Events: Number of events that we would like to sample (int)
-        Y: Cartesian coordinates of the detector location in cm (3 element float array)
-        R_max: Maximum distance for which we care about dipole interactions
+        Y: Cartesian coordinates of the detector location in units of R_Earth (3 element float array)
+        R_max: Maximum distance for which we care about dipole interactions in units of R_Earth
             (float array with Num_Events elements)
     
     returns:
         x_vect_vals: Num_Events-by-3 array of the sampled locations for the neutrino
-                dipole interactions in cm
+                dipole interactions in units of R_Earth
     '''
     
     R_Earth = 1   # 6378.1 * 1000* 100    #Radius of the Earth (cm)
@@ -194,6 +194,15 @@ def Sample_Interaction_Locations(Num_Events, Y, R_max):
     return(x_vect_vals)
 
 def weight_positions(Y,R_max):
+    '''
+    Computes the proper weight for position sampling
+    args:
+        Y: Cartesian coordinates of the detector location in units of R_Earth (3 element float array)
+        R_max: Maximum distance for which we care about dipole interactions in units of R_Earth
+            (float array with Num_Events elements)
+    returns:
+        w_V: Positional weight
+    '''
     
     R_Earth = 1 #6378.1 * 1000* 100    #Radius of the Earth (cm)
     V_Earth = 4*pi/3 * R_Earth**3
@@ -218,15 +227,15 @@ def Sample_Neutrino_Entry_Position(X, Y, cos_Theta):
     Samples the location where the neutrino entered the Earth
     
     args:
-        X: Cartesian coordinates of the neutrino interaction in cm
+        X: Cartesian coordinates of the neutrino interaction in units of R_Earth
             (number of events-by-3 array of floats)
-        Y: Cartesian coordinates of the detector position in cm
+        Y: Cartesian coordinates of the detector position in units of R_Earth
             (3 element array of floats)
         cos_Theta: scattering angles for the neutrino interactions
             (array of floats of length number of events)
     
     returns:
-        W: Cartesian coordinates of the neutrino entry position in cm
+        W: Cartesian coordinates of the neutrino entry position in units of R_Earth
             (number of events-by-3 array of floats.)
     '''
     v_1_hat = np.zeros((len(cos_Theta),3))
