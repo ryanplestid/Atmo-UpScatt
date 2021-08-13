@@ -153,7 +153,7 @@ def Arbitrary_Scattering_Weight(cos_Theta,cos_vals,frac_diff_cross_sec_vals):
     
     return(w_Theta)
 
-def Sample_Interaction_Locations(Num_Events, Y, R_max):
+def Sample_Interaction_Locations(Num_Events, Y, R_max, R_min):
     '''
     Sample locations within the Earth for neutrino dipole interactions
     
@@ -162,6 +162,8 @@ def Sample_Interaction_Locations(Num_Events, Y, R_max):
         Y: Cartesian coordinates of the detector location in units of R_Earth (3 element float array)
         R_max: Maximum distance for which we care about dipole interactions in units of R_Earth
             (float array with Num_Events elements)
+        R_min: Minimum distance for which we care about dipole interaction
+            in units of R_Earth = 1 (float array with Num_Events elements)
     
     returns:
         x_vect_vals: Num_Events-by-3 array of the sampled locations for the neutrino
@@ -176,7 +178,8 @@ def Sample_Interaction_Locations(Num_Events, Y, R_max):
     x_mags = np.zeros(Num_Events)
     
     while needed_events > 0:
-        r_primes = np.minimum(2*R_Earth,R_max[needed_indeces]) * (rand.rand(needed_events)**(1/3)) #cm
+        new_Rmaxs = np.minimum(2*R_Earth,R_max[needed_indeces])
+        r_primes = ((rand.rand(needed_events) * (new_Rmaxs**3 - R_min**3)) + R_min**3)**(1/3)#cm
         cos_theta_primes = 1 - 2 * rand.rand(needed_events)
         theta_primes = np.arccos(cos_theta_primes)
         phi_primes = 2*pi*rand.rand(needed_events)
@@ -187,13 +190,13 @@ def Sample_Interaction_Locations(Num_Events, Y, R_max):
         x_vect_vals[needed_indeces,2] = Y[2] + r_primes*cos(theta_primes)
         
         x_mags = np.sqrt(x_vect_vals[:,0]**2 + x_vect_vals[:,1]**2 + x_vect_vals[:,2]**2)
-        needed_indeces = x_mags > R_Earth
+        needed_indeces = (x_mags > R_Earth) 
         needed_events = sum(needed_indeces)
         #print(100 - 100 * needed_events/Num_Events, "% done")
         
     return(x_vect_vals)
 
-def weight_positions(Y,R_max):
+def weight_positions(Y,R_max, R_min):
     '''
     Computes the proper weight for position sampling
     args:
@@ -218,6 +221,7 @@ def weight_positions(Y,R_max):
                       * (Y_mag**2 + 2*Y_mag*(R_Earth+R_max) - 3*(R_Earth - R_max)**2)
                       *np.heaviside(R_max + Y_mag - R_Earth,0) * np.heaviside(R_Earth + Y_mag - R_max,1))
     
+    V_int -= 4*pi/3 * R_min**3
     w_V = V_int / V_Earth
     return(w_V)
 
