@@ -18,6 +18,7 @@ import dipoleModel
 import atmoNuIntensity
 import earthComp
 import DetectorModule
+import Incoherent_Module
 
 #Make Event Class
 class Event :
@@ -52,12 +53,13 @@ Theta_max = pi
 
 #m_N = 0.01 #HNL mass, GeV
 #d = 1e-9 #Dipole coupling (MeV^-1)
-m_N_vals = [0.1]#np.logspace(-2,np.log10(0.3),10) #HNL mass (GeV)
-d_vals = [1e-10]#np.logspace(-10.5,-7,14) #Dipole Coupling (MeV^-1)
+m_N_vals = np.logspace(-2,np.log10(0.3),10) #HNL mass (GeV)
+d_vals = np.logspace(-11,-7,10) #Dipole Coupling (MeV^-1)
 Decays = np.zeros((len(d_vals),len(m_N_vals)))
-num_Events = int(2.5e5)
+num_Events = int(1e5)
 
 alpha_decay = 0 #Used for determining if the HNL is Dirac or Majoranna
+m_nuc = 0.94 #nucleon mass GeV
 
 #Sample events
 d_index = 0
@@ -77,7 +79,14 @@ for d in d_vals:
                         'm_N (GeV)': m_N,
                         'Detector Location (r_Earth=1)':Y}
         
-        E_min = max(0.1,m_N + .001) #At least 1 MeV above m_N
+        #Find Energy to allow scattering at all angles (GeV)
+        if m_N < m_nuc:
+            E_thresh = ((m_nuc * m_N**2) + m_N * (2* m_nuc**2 - m_N**2))/(2 * m_nuc**2 - 2* m_N**2)
+        else:
+            E_thresh = ((m_nuc * m_N**2) + m_N * (-2* m_nuc**2 + m_N**2))/(2 * m_nuc**2 - 2* m_N**2)
+        print(E_thresh)
+        
+        E_min = max(0.1,E_thresh) #Threshold Energy for scattering off proton
     
         Energies = SampleEvents.Sample_Neutrino_Energies(num_Events,E_min,E_max,power_law)
         lambdas = dipoleModel.decay_length(d,m_N,Energies)
@@ -96,7 +105,7 @@ for d in d_vals:
         flux = atmoNuIntensity.calc_fluxes(Energies,cos_zeniths, flux_name) #Flux in GeV^-1 cm^-2 sr^-1 s^-1
         
         #Calculate cross section x number density
-        N_d_sigma_d_cos_Thetas = dipoleModel.N_Cross_Sec_from_radii(d,m_N,Energies,cos_Thetas,rs)
+        N_d_sigma_d_cos_Thetas = Incoherent_Module.N_Cross_Sec_from_radii(d,m_N,Energies,cos_Thetas,rs)
         
         #Prob to decay in detector * Perpendicular Area
         Y_minus_X_mag = np.sqrt((Y[0] - X_vect_vals[:,0])**2 + (Y[1] - X_vect_vals[:,1])**2 + (Y[2] - X_vect_vals[:,2])**2)
@@ -155,15 +164,17 @@ for d in d_vals:
             event.V_weight = w_V[i]
             event.Theta_weight = w_Theta[i]
             
+            event.dR = dR[i]
+            
             event_list.append(event)
-        
+        Sim_MetaData['Rate'] = Rate
         Sim_Dictionary = {'MetaData':Sim_MetaData,
                           'EventData': event_list}
         with open(filename,'wb') as events_file:
             pickle.dump(Sim_Dictionary, events_file)
         
         #print(Sim_Dictionary['MetaData']['m_N (GeV)'])
-
+        
         m_N_index += 1
     
     d_index += 1
@@ -178,7 +189,7 @@ plt.xlabel('$M_N$ (GeV)', fontsize = 14)
 plt.xscale('log')
 plt.suptitle('Total Decays over 10 years', fontsize = 16)
 plt.suptitle('Monte Carlo Total HNL Decays', fontsize = 16)
-plt.title(str(num_Events) + ' events, Super-K Volume, No Double Bang')
+plt.title(str(num_Events) + ' events, Super-K Volume, No Double Bang, Full Cross Sec')
 
 
 #Calculate what is seen by the detector
@@ -195,6 +206,7 @@ plt.xlabel('$\cos(\\theta_z)$')
 plt.ylim([min(E_midpoints),0.7])
 #plt.suptitle('Total events in each bin for 10 years',fontsize = 16)
 #plt.title('$m_N$ ='+str(m_N)+"GeV, d = "+str(d)+"$MeV^{-1}$",fontsize = 14)
+
 
 
 if __name__ == "__main__":
