@@ -56,7 +56,7 @@ Theta_max = pi
 m_N_vals = np.logspace(-2,np.log10(0.3),10) #HNL mass (GeV)
 d_vals = np.logspace(-11,-7,10) #Dipole Coupling (MeV^-1)
 Decays = np.zeros((len(d_vals),len(m_N_vals)))
-num_Events = int(1e5)
+num_Events = int(1e4)
 
 alpha_decay = 0 #Used for determining if the HNL is Dirac or Majoranna
 m_nuc = 0.94 #nucleon mass GeV
@@ -77,7 +77,8 @@ for d in d_vals:
                         'Cos Theta Power Law':-1,
                         'd (MeV^-1)': d,
                         'm_N (GeV)': m_N,
-                        'Detector Location (r_Earth=1)':Y}
+                        'Detector Location (r_Earth=1)':Y,
+                        'Detector Volume (cm^3)':V_det}
         
         #Find Energy to allow scattering at all angles (GeV)
         if m_N < m_nuc:
@@ -152,6 +153,10 @@ for d in d_vals:
             cos_zen = cos_zeniths[i]
             event = Event(E_nu, E_N, interact_pos, entry_pos,cos_zen)
             
+            event.Dist_to_det = Y_minus_X_mag[i]
+            event.N_lambda = lambdas[i]
+            event.N_diff_cross_sec = N_d_sigma_d_cos_Thetas[i]
+            
             event.NuEFlux = flavor_fluxes['E'][i]
             event.NuMuFlux = flavor_fluxes['Mu'][i]
             event.NuTauFlux = flavor_fluxes['Tau'][i]
@@ -167,7 +172,9 @@ for d in d_vals:
             event.dR = dR[i]
             
             event_list.append(event)
+        Sim_MetaData['Energy Limits']=[E_min,E_max]
         Sim_MetaData['Rate'] = Rate
+        
         Sim_Dictionary = {'MetaData':Sim_MetaData,
                           'EventData': event_list}
         with open(filename,'wb') as events_file:
@@ -178,7 +185,7 @@ for d in d_vals:
         m_N_index += 1
     
     d_index += 1
-
+'''
 figk, ax = plt.subplots(1,1)
 levels = np.logspace(-6,8,8)
 cp = ax.contourf(m_N_vals, d_vals, Decays * 86400 * 365 * 10, levels,locator = ticker.LogLocator(), cmap = cm.PuBu_r)
@@ -206,7 +213,7 @@ plt.xlabel('$\cos(\\theta_z)$')
 plt.ylim([min(E_midpoints),0.7])
 #plt.suptitle('Total events in each bin for 10 years',fontsize = 16)
 #plt.title('$m_N$ ='+str(m_N)+"GeV, d = "+str(d)+"$MeV^{-1}$",fontsize = 14)
-
+'''
 
 
 if __name__ == "__main__":
