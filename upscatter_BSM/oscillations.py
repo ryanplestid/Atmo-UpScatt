@@ -59,19 +59,13 @@ def getProbs(x,ne,E_nu,anti=False):
     '''
     Computes dictionary of transiion probabilities for neutrinos propagating
     along a trajectory with number density ne(x) 
-
     args: 
-
          x: Array of positions in units of rEarth=1
          
          ne: Array of electron number densities in units of cm^-3
-
          E_nu: Energy of neutino in GeV
-
          anti: Boolean variable that indicates if neutrino is particle or anti-partcle
-
     returns:
-
            Dictinoary with P_ee etc. Format is { "e->e" : # , ... } 
     '''
 
@@ -82,12 +76,13 @@ def getProbs(x,ne,E_nu,anti=False):
     x=x*rEarth_in_km
     
     xMax=x[-1:]
+    #xMax = x[-2]
 
 
     assert np.amin(ne) >= 0, "Negative number density not allowed "
 
     
-    get_ne=interpolate.interp1d(x,ne)
+    get_ne=interpolate.interp1d(x,ne,fill_value = "extrapolate")
 
     def matt_pot(x):
         return(sqrt(8)*G_F*E_nu*np.diag([get_ne(x),0,0]) )
