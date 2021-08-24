@@ -112,7 +112,7 @@ def getProbs(x,ne,E_nu,anti=False):
     err=np.abs(np.vdot(final,final)-1)
 
     if  err>1E-2:
-        sol = solve_ivp(ham, [0,xMax], [0+0*1j, 1+0*1j, 0],rtol=1E-6)
+        sol = solve_ivp(ham, [0,xMax], [1+0*1j, 0+0*1j, 0],rtol=1E-6)
         final=np.transpose(sol.y)[-1:][0]
     
         err=np.abs(np.vdot(final,final)-1)
@@ -153,7 +153,7 @@ def getProbs(x,ne,E_nu,anti=False):
 
 
     if  err>1E-2:
-        sol = solve_ivp(ham, [0,xMax], [0+0*1j, 1+0*1j, 0],rtol=1E-6)
+        sol = solve_ivp(ham, [0,xMax], [0+0*1j, 0+0*1j, 1+0j],rtol=1E-6)
         final=np.transpose(sol.y)[-1:][0]
     
         err=np.abs(np.vdot(final,final)-1)
