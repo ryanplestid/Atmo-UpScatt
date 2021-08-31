@@ -255,14 +255,42 @@ def N_Cross_Sec_from_radii(d, mn, E_nu, cos_Theta, rs):
                                 in cm^-1 (float, same size as En)
         
     '''
-    N_d_sigma_d_cos_Theta = np.zeros(len(E_nu))
-    for r_index in range(len(rs)):
-        r = rs[r_index]
+    try:
+        N_d_sigma_d_cos_Theta = np.zeros(len(E_nu))
+        for r_index in range(len(rs)):
+            r = rs[r_index]
+            n_dens = earthComp.n_density(r)
+            Zeds,As,R1s,Ss,num_dens = (np.zeros(len(n_dens)-1),np.zeros(len(n_dens)-1),
+                                    np.zeros(len(n_dens)-1),np.zeros(len(n_dens)-1),
+                                    np.zeros(len(n_dens)-1))
+            
+            index = 0
+            for element in n_dens.keys():
+                if element == 'e':
+                    continue
+                num_dens[index] = n_dens[element] # cm^(-3)
+                Zeds[index] = earthComp.atomic_number[element]
+                As[index] = earthComp.molar_mass[element]
+                
+                #Any element without a Helm fit parameters is treated as Silicon
+                try:
+                    R1s[index] = formFactorFit.Helm_Dict[Element_Dict[element]]["R1"]
+                    Ss[index] = formFactorFit.Helm_Dict[Element_Dict[element]]["s"]
+                except:
+                    R1s[index] = formFactorFit.Helm_Dict[Element_Dict["Si"]]["R1"]
+                    Ss[index] = formFactorFit.Helm_Dict[Element_Dict["Si"]]["s"]
+                index += 1
+            
+            N_d_sigma_d_cos_Theta[r_index] = Full_N_d_sigma_d_cos_Theta(d,mn,
+                                                                        E_nu[r_index],cos_Theta[r_index],
+                                                                        Zeds, As, R1s, Ss, num_dens)
+    except:
+        r = rs
         n_dens = earthComp.n_density(r)
         Zeds,As,R1s,Ss,num_dens = (np.zeros(len(n_dens)-1),np.zeros(len(n_dens)-1),
-                                np.zeros(len(n_dens)-1),np.zeros(len(n_dens)-1),
-                                np.zeros(len(n_dens)-1))
-        
+                                    np.zeros(len(n_dens)-1),np.zeros(len(n_dens)-1),
+                                    np.zeros(len(n_dens)-1))
+            
         index = 0
         for element in n_dens.keys():
             if element == 'e':
@@ -280,10 +308,10 @@ def N_Cross_Sec_from_radii(d, mn, E_nu, cos_Theta, rs):
                 Ss[index] = formFactorFit.Helm_Dict[Element_Dict["Si"]]["s"]
             index += 1
         
-        N_d_sigma_d_cos_Theta[r_index] = Full_N_d_sigma_d_cos_Theta(d,mn,
-                                                                    E_nu[r_index],cos_Theta[r_index],
-                                                                    Zeds, As, R1s, Ss, num_dens)
-    
+        N_d_sigma_d_cos_Theta = Full_N_d_sigma_d_cos_Theta(d,mn,
+                                                           E_nu,cos_Theta,
+                                                           Zeds, As, R1s, Ss, num_dens)
+        
     return(N_d_sigma_d_cos_Theta)
     
 
