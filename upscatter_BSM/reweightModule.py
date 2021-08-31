@@ -10,11 +10,14 @@ import pickle
 
 #Import modules that we made
 #import SampleEvents
-#import dipoleModel
-#import atmoNuIntensity
+import dipoleModel
+import Incoherent_Module
+import atmoNuIntensity
 import earthComp
 #import DetectorModule
 import oscillations
+import MainIntegration
+#from MainIntegration import filename_list, d_vals, m_N_vals, num_Events
 
 def Update_Fluxes(filename,threshold):
     '''
@@ -36,13 +39,30 @@ def Update_Fluxes(filename,threshold):
     
     N_Events = len(Event_list)
     Rate = Meta_Data["Rate"]
-    min_dR = (Rate/N_Events) * threshold
+    #min_dR = (Rate/N_Events) * threshold
+    ###
+    rates_list = np.zeros(len(Event_list))
+    index = 0
+    for event in Event_list:
+        rates_list[index] = event.dR
+        index += 1
+    rates_list.sort()
+    cummulative = 0
+    min_index = -1
+    while cummulative < Rate*threshold:
+        min_index += 1
+        cummulative += rates_list[min_index]
+        
+    min_dR = rates_list[min_index]
+        
+    ###
     trial = 0
     for event in Event_list:
         trial += 1
-    
-        if trial % 500 == 0:
+        
+        if trial % 100000 == 0:
             print(trial)
+            
         if event.dR < min_dR:
             new_fluxes['E'].append(event.NuEFlux)
             new_fluxes['Mu'].append(event.NuMuFlux)
@@ -51,8 +71,8 @@ def Update_Fluxes(filename,threshold):
             new_fluxes['MuBar'].append(event.NuMubarFlux)
             new_fluxes['TauBar'].append(event.NuTaubarFlux)
             continue
-        
-        X = event.Interact_Pos  #location of interaction in cm
+        #print('did oscillate')
+        X = event.Interact_Pos  #location of interaction in R_Earth = 1
         W = event.Entry_Pos    #location of production in R_Earth = 1
 
         Energy = event.nu_Energy     #Energy in GeV
@@ -61,7 +81,7 @@ def Update_Fluxes(filename,threshold):
         
         r_distance, n_e = earthComp.gen_1d_ne(W,X) #distance traveled (units of R_Earth) 
                                             #and number density of electrons (1/cm^3)
-        km_distance = r_distance * 6378.1
+        #km_distance = r_distance * 6378.1
         probs = oscillations.getProbs(r_distance,n_e,Energy,anti = False)
         anti_probs = oscillations.getProbs(r_distance, n_e,Energy, anti = True)
         
@@ -107,12 +127,14 @@ def Update_Fluxes(filename,threshold):
         
                                                 
 
-def ReIntegrate(filename, flavors = ['E','EBar','Mu','MuBar','Tau','TauBar']):
+def ReIntegrate(filename,d,m_N, flavors = ['E','EBar','Mu','MuBar','Tau','TauBar']):
     '''
     Re-integrates to find the rate given a file with meta data and event objects
     
     args:
         filename: Name of the file that contains the necessary information (str)
+        d: Dipole coupling constant (MeV^-1)
+        m_N = HNL mass (GeV)
         flavors: Flavors of neutrinos for which we are interested in the interactions
     
     returns:
@@ -138,8 +160,9 @@ def ReIntegrate(filename, flavors = ['E','EBar','Mu','MuBar','Tau','TauBar']):
     trial = 0
     for event in Event_list:
         trial += 1
+        N_lambda = dipoleModel.decay_length(d,m_N, event.N_Energy)
             
-        P_dec_A_Perp = (np.exp(-event.Dist_to_det/event.N_lambda) * (1-np.exp(-l_det/event.N_lambda))
+        P_dec_A_Perp = (np.exp(-event.Dist_to_det/N_lambda) * (1-np.exp(-l_det/N_lambda))
                         *A_perp)
         
         #Find the total flux for desired flavors
@@ -162,10 +185,11 @@ def ReIntegrate(filename, flavors = ['E','EBar','Mu','MuBar','Tau','TauBar']):
         
         weights = event.E_weight * event.V_weight * event.Theta_weight
         tot_delta = R_Earth_cm* Energy_range * Cos_Theta_range * Earth_Volume * weights / len(Event_list)
-        tot_integral += (event.N_diff_cross_sec *4*pi*tot_flux 
+        N_d_sigma_d_cos_Theta = Incoherent_Module.N_Cross_Sec_from_radii(d,m_N,event.nu_Energy,
+                                                                         event.cos_Theta,event.r)
+        tot_integral += (N_d_sigma_d_cos_Theta *4*pi*tot_flux 
                          * (P_dec_A_Perp)/(4*pi*event.Dist_to_det**2) * tot_delta)
         
     
     print('Rate',tot_integral)
     return(tot_integral)
-        
