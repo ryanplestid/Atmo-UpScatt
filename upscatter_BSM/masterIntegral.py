@@ -51,6 +51,8 @@ l_det = (V_det)**(1/3) / R_Earth_cm # units of R_Earth = 1
 epsilon = 1e-7 #1 - cos(Theta_min)
 Theta_max = pi
 
+alpha_decay = 0 #Used for determining if the HNL is Dirac or Majoranna
+
 def MonteCarlo(m_N_vals,d_vals,num_Events):
     
     '''
@@ -65,8 +67,6 @@ def MonteCarlo(m_N_vals,d_vals,num_Events):
     
     Decays = np.zeros((len(d_vals),len(m_N_vals)))
     
-    
-    alpha_decay = 0 #Used for determining if the HNL is Dirac or Majoranna
     m_nuc = 0.94 #nucleon mass GeV
     
     filename_list = []
@@ -87,7 +87,8 @@ def MonteCarlo(m_N_vals,d_vals,num_Events):
                             'd (MeV^-1)': d,
                             'm_N (GeV)': m_N,
                             'Detector Location (r_Earth=1)':Y,
-                            'Detector Volume (cm^3)':V_det}
+                            'Detector Volume (cm^3)':V_det,
+                            'Oscillations':False}
             
             #Find Energy to allow scattering at all angles (GeV)
             if m_N < m_nuc:
@@ -152,7 +153,7 @@ def MonteCarlo(m_N_vals,d_vals,num_Events):
                                           flux_name,nu_flavors =[flavor])
     
             #Create a filename to save these events
-            filename = "mN_"+str(m_N) +"_d_"+str(d)+".events"
+            filename = "mN_%.3g" %m_N+"_d_%.3g"%d+".events"
             #Make a list of events
             event_list = []
             for i in range(len(Energies)):
@@ -213,11 +214,54 @@ plt.suptitle('Total Decays over 10 years', fontsize = 16)
 plt.suptitle('Monte Carlo Total HNL Decays', fontsize = 16)
 plt.title(str(num_Events) + ' events, Super-K Volume, No Double Bang, Full Cross Sec')
 '''
+
 '''
 #Calculate what is seen by the detector
+m_N = 0.1 #GeV
+d = 2e-10 #MeV^-1
+filename, Decays = MonteCarlo([m_N],[d],100000)
+Sim_Dict = pickle.load(open(filename,"rb"))
+Meta_Data = Sim_Dict["MetaData"]
+Event_list = Sim_Dict["EventData"]
+Y = Meta_Data['Detector Location (r_Earth=1)']
+num_Events = len(Event_list)
+
+Energies = np.zeros(num_Events)
+dRs = np.zeros(num_Events)
+X_vect_vals = np.zeros((num_Events,3))
+index = 0
+for event in Event_list:
+    Energies[index] = event.N_Energy
+    X_vect_vals[index,:] = event.Interact_Pos
+    dRs[index] = event.dR
+    index += 1
+
 cos_zeta_primes = DetectorModule.Calc_cos_zeta_prime(num_Events,alpha_decay)
 zetas, E_gammas = DetectorModule.Calc_Zetas_and_Energies(cos_zeta_primes, Energies, m_N)
 cos_phi_dets = DetectorModule.Calc_cos_phi_det(Y, X_vect_vals, zetas)
+
+good_indeces = E_gammas > 0.030 #30 MeV threshold
+cos_phi_bounds = np.linspace(-1,1,11)
+cos_phi_midpoints = (cos_phi_bounds[:10] + cos_phi_bounds[1:])/2
+angular_rates = np.zeros(len(cos_phi_midpoints))
+
+for e_index in range(len(cos_phi_dets)):
+    cos_phi = cos_phi_dets[e_index]
+    dR = dRs[e_index]
+    if E_gammas[e_index] > 0.030:
+        for phi_index in range(len(angular_rates)):
+            if cos_phi_bounds[phi_index] < cos_phi and cos_phi < cos_phi_bounds[phi_index + 1]:
+                angular_rates[phi_index] += dR * 86400 * 365 * 10
+
+
+fig = plt.figure()
+plt.bar(cos_phi_midpoints, angular_rates)
+plt.xlabel('$\cos(\phi_{det})$')
+plt.ylabel('Rate')
+plt.suptitle('Photons in 10 Years for Angular bins')
+plt.title('$m_N$ =' + str(m_N) + ' GeV ; d =' + str(d) + ' $MeV^{-1}$ '+str(num_Events)+'Events')
+'''
+'''
 E_midpoints, cos_midpoints, rates = DetectorModule.Rate_In_Each_Bin(0,1.3, 5, 10,E_gammas, cos_phi_dets, dR)
 figk, ax = plt.subplots(1,1,figsize = (8,6))
 #levels = np.logspace(-3,3,20)
@@ -229,6 +273,7 @@ plt.ylim([min(E_midpoints),0.7])
 #plt.suptitle('Total events in each bin for 10 years',fontsize = 16)
 #plt.title('$m_N$ ='+str(m_N)+"GeV, d = "+str(d)+"$MeV^{-1}$",fontsize = 14)
 '''
+
 
 
 if __name__ == "__main__":
