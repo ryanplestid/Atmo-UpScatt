@@ -14,7 +14,7 @@ import dipoleModel
 import Incoherent_Module
 import atmoNuIntensity
 import earthComp
-#import DetectorModule
+import DetectorModule
 import oscillations
 import MainIntegration
 #from MainIntegration import filename_list, d_vals, m_N_vals, num_Events
@@ -33,11 +33,16 @@ def Update_Fluxes(filename,threshold):
     Meta_Data = Sim_Dict["MetaData"]
     Event_list = Sim_Dict["EventData"]
     
+    #Don't perform oscillations if oscillations have already been done
+    if Meta_Data['Oscillations'] == True:
+        return(0)
+    
     new_fluxes = {'E':[], 'EBar':[],
                   'Mu':[], 'MuBar':[],
                   'Tau':[], 'TauBar':[]}
     
     N_Events = len(Event_list)
+    #print('N_Events',N_Events)
     Rate = Meta_Data["Rate"]
     #min_dR = (Rate/N_Events) * threshold
     ###
@@ -60,7 +65,7 @@ def Update_Fluxes(filename,threshold):
     for event in Event_list:
         trial += 1
         
-        if trial % 100000 == 0:
+        if trial % 10000 == 0:
             print(trial)
             
         if event.dR < min_dR:
@@ -118,7 +123,9 @@ def Update_Fluxes(filename,threshold):
         event.NuMubarFlux = new_fluxes['MuBar'][index]
         event.NuTaubarFlux = new_fluxes['TauBar'][index]
         index += 1
-        
+    
+    Meta_Data['Oscillations'] = True
+    
     Sim_Dict = {"MetaData":Meta_Data,"EventData":Event_list}
     with open(filename,'wb') as events_file:
         pickle.dump(Sim_Dict, events_file)
@@ -127,7 +134,7 @@ def Update_Fluxes(filename,threshold):
         
                                                 
 
-def ReIntegrate(filename,d,m_N, flavors = ['E','EBar','Mu','MuBar','Tau','TauBar']):
+def ReIntegrate(filename,d,m_N,alpha_decay,V_det = None, flavors = ['E','EBar','Mu','MuBar','Tau','TauBar']):
     '''
     Re-integrates to find the rate given a file with meta data and event objects
     
@@ -144,6 +151,8 @@ def ReIntegrate(filename,d,m_N, flavors = ['E','EBar','Mu','MuBar','Tau','TauBar
     Sim_Dict = pickle.load(open(filename,"rb"))
     Meta_Data = Sim_Dict["MetaData"]
     Event_list = Sim_Dict["EventData"]
+    
+    Y = Meta_Data['Detector Location (r_Earth=1)']
     R_Earth = 1 # R_Earth = 1 #
     R_Earth_cm = 6378.1 * 1000* 100    #Radius of the Earth (cm)
     
@@ -151,15 +160,22 @@ def ReIntegrate(filename,d,m_N, flavors = ['E','EBar','Mu','MuBar','Tau','TauBar
     Theta_min,Theta_max = Meta_Data['Theta Limits'][0], Meta_Data['Theta Limits'][1]
     Cos_Theta_range = cos(Theta_min) - cos(Theta_max)
     Earth_Volume = (4*pi/3)*R_Earth**3 #cm^3
-    V_det = Meta_Data["Detector Volume (cm^3)"]
+    
+    if V_det == None:
+        V_det = Meta_Data["Detector Volume (cm^3)"]
     
     A_perp = (V_det)**(2/3) #cm^2
     l_det = (V_det)**(1/3) / R_Earth_cm # units of R_Earth = 1
+    Energies = np.zeros(len(Event_list))
+    dRs = np.zeros(len(Event_list))
+    X_vect_vals = np.zeros((len(Event_list),3))
     
     tot_integral = 0
     trial = 0
     for event in Event_list:
-        trial += 1
+        Energies[trial] = event.N_Energy
+        X_vect_vals[trial,:] = event.Interact_Pos
+        
         N_lambda = dipoleModel.decay_length(d,m_N, event.N_Energy)
             
         P_dec_A_Perp = (np.exp(-event.Dist_to_det/N_lambda) * (1-np.exp(-l_det/N_lambda))
@@ -189,7 +205,26 @@ def ReIntegrate(filename,d,m_N, flavors = ['E','EBar','Mu','MuBar','Tau','TauBar
                                                                          event.cos_Theta,event.r)
         tot_integral += (N_d_sigma_d_cos_Theta *4*pi*tot_flux 
                          * (P_dec_A_Perp)/(4*pi*event.Dist_to_det**2) * tot_delta)
+        dRs[trial] = (N_d_sigma_d_cos_Theta *4*pi*tot_flux 
+                         * (P_dec_A_Perp)/(4*pi*event.Dist_to_det**2) * tot_delta)
         
+        trial += 1
+       
+    cos_zeta_primes = DetectorModule.Calc_cos_zeta_prime(len(Event_list),alpha_decay)
+    zetas, E_gammas = DetectorModule.Calc_Zetas_and_Energies(cos_zeta_primes, Energies, m_N)
+    cos_phi_dets = DetectorModule.Calc_cos_phi_det(Y, X_vect_vals, zetas)
     
+    cos_phi_bounds = np.linspace(-1,1,11)
+    cos_phi_midpoints = (cos_phi_bounds[:10] + cos_phi_bounds[1:])/2
+    angular_rates = np.zeros(len(cos_phi_midpoints))
+    
+    for e_index in range(len(cos_phi_dets)):
+        cos_phi = cos_phi_dets[e_index]
+        dR = dRs[e_index]
+        if E_gammas[e_index] > 0.030:
+            for phi_index in range(len(angular_rates)):
+                if cos_phi_bounds[phi_index] < cos_phi and cos_phi < cos_phi_bounds[phi_index + 1]:
+                    angular_rates[phi_index] += dR
     print('Rate',tot_integral)
-    return(tot_integral)
+    
+    return(tot_integral,cos_phi_midpoints, angular_rates)
