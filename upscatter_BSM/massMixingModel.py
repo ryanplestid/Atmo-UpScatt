@@ -99,7 +99,7 @@ def decay_length(flav,U,mN,EN):
 ### Needs to be updated
 ####
 
-def d_sigma_d_cos_Theta_coherent(flav,U,mN,Enu,cos_Theta,Qw):
+def d_sigma_d_cos_Theta_coherent(U,mN,Enu,cos_Theta,Qw):
     '''
     Determine the differential cross section for a coherent scattering at a specified angle
     
@@ -140,6 +140,7 @@ def d_sigma_d_cos_Theta_nucleon(anti_nu,nucleon,mN,Enu,cos_Theta):
     Determine the differential cross section for a coherent scattering at a specified angle
     
     args:
+        anti_nu: either "nu" or "nu_bar"
         U:  mixing matrix element. 
         mn: mass of the lepton in GeV (float)
         En: Energy of the lepton in GeV (float or array of floats)
@@ -169,7 +170,7 @@ def d_sigma_d_cos_Theta_nucleon(anti_nu,nucleon,mN,Enu,cos_Theta):
     if anti_nu=="nu_bar":
         sgn=-1
 
-    if cos_Theta>=0:
+    if cos_Theta>=0:d
         EN=(np.sqrt(Enu**2*cos_Theta**2*(4(mN**2*(Enu**2*(cos_Theta**2-1)-Enu**MP-MP**2)\
                                           +4*Enu**2*MP**2+mN**4))) +(Enu**2+MP**2)*(2*Enu*M+mN**2))\
                                           *1/(2*(Enu*(1-cos_Theta)+M)*(Enu+Enu*cos_Theta+M))
@@ -213,7 +214,7 @@ def d_sigma_d_cos_Theta_nucleon(anti_nu,nucleon,mN,Enu,cos_Theta):
     C= 0.25*(FA**2+F1**2+eta*F2**2)
 
 
-    dsigma_dt= GF**2*MP**2*VUD**2/(8*np.pi*Enu**2)*(A +sgn*(s-u)/MP**2*B+(s-u)**2/MP**4*C
+    dsigma_dt= GF**2*MP**2*VUD**2/(8*np.pi*Enu**2)*(A +sgn*(s-u)/MP**2*B+(s-u)**2/MP**4*C)
 
                                                     
 
@@ -226,7 +227,8 @@ def d_sigma_d_cos_Theta_nucleon(anti_nu,nucleon,mN,Enu,cos_Theta):
 
                                                 
 
-def Full_N_d_sigma_d_cos_Theta(d, mn, En, cos_Theta, Zeds, R1s, Ss, num_dens):
+def Full_N_d_sigma_d_cos_Theta(U, mN, EN, cos_Theta, Zeds, R1s, Ss, num_dens,\
+                               scattering_channel="nucleon", anti_nu="nu", response="RFG"):
     '''
     Determine the differential cross section for a coherent and incoherent 
     scattering at a specified angle with the composition specified
@@ -241,6 +243,10 @@ def Full_N_d_sigma_d_cos_Theta(d, mn, En, cos_Theta, Zeds, R1s, Ss, num_dens):
         Ss: Helm skin thicknesses in fm (array of floats, same size as Zeds)
         num_dens: number density of the nucleus in question
                 (array of floats, same size as Zeds)
+        sc_ch: Scattering channel, (string) default="nucleon" , 
+             options={"nucleon", "coherent", or "response_function"}
+        anti_nu: neutrino vs anti-neutrino (string) options-{"nu","nu_bar"}   
+                  does not affect coherent cross section. 
         
     returns:
         N_d_sigma_d_cos_Theta: differential cross section times number dens
@@ -252,15 +258,29 @@ def Full_N_d_sigma_d_cos_Theta(d, mn, En, cos_Theta, Zeds, R1s, Ss, num_dens):
         return(d_sigma_d_cos_Theta)
     
     #Calculate the transfered momentum
-    En_MeV = En *1000  #Neutrino/Lepton Energies in MeV
-    mn_MeV = mn*1000  #Lepton mass in MeV
-    t = (2*En_MeV**2 - mn_MeV**2 - 2*En_MeV*np.sqrt(En_MeV**2 - mn_MeV**2) 
-          * cos_Theta) #Transfered momentum^2 (MeV^2)
+
+    if scattering_channel="coherent":
+
+        t = -(2*En**2 - mn**2 - 2*En*np.sqrt(EN**2 - mN**2) * cos_Theta) #Transfered momentum^2 (GeV^2)
     
-    q = np.sqrt(t) #Transfered momentum (MeV)
+        q = np.sqrt(-t) #Transfered momentum (MeV)
+        d_sig_d_cos_Theta = d_sigma_d_cos_Theta_coherent(d,mn,En,cos_Theta,1)
+
+
+    if scattering_channel="coherent":
+        
+
+    if scattering_channel="response":
+        #
+        # We can code somethnig up to sample t and omega 
+        # given a response function and then calculate 
+        # E_nu given that data
+        #
+        return(0)
+
     
     #Calculate the coherent cross sections for Z = 1
-    d_sig_d_cos_coh = d_sigma_d_cos_Theta_coherent(d,mn,En,cos_Theta,1)
+
     
     #Initialize the cross section as 0
     N_d_sigma_d_cos_Theta = 0
