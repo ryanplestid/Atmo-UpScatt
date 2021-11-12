@@ -14,7 +14,7 @@ MUP=1.79;
 MUN=-1.86;
 MP=0.94; # Neutron and proton treated as having same mass
 MA=1;
-MV=0.71;
+MV=0.84;
 
 SW=np.sqrt(0.229);
 VUD=0.975;
