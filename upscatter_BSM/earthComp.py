@@ -1,5 +1,4 @@
-
-1;95;0cimport numpy as np
+import numpy as np
 import warnings
 
 from  numpy import sin,cos,exp,sqrt,pi
@@ -14,6 +13,12 @@ atomic_number={"O" : 8, "Si": 14, "Al": 13, \
                "Fe": 26, "Ca": 20, "Na": 11, \
                "K" : 19, "Mg": 12,  "S": 16, \
                "Ni": 28}
+
+neutron_number={"O" : 8, "Si": 14, "Al": 14, \
+               "Fe": 30, "Ca": 20, "Na": 12, \
+               "K" : 20, "Mg": 12,  "S": 16, \
+                "Ni": 30}
+
 
 
 n_avagadro=6.022*1E23

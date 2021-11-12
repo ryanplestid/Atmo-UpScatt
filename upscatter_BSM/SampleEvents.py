@@ -191,7 +191,7 @@ def Sample_Interaction_Locations(Num_Events, Y, R_max, R_min):
         
         x_mags = np.sqrt(x_vect_vals[:,0]**2 + x_vect_vals[:,1]**2 + x_vect_vals[:,2]**2)
         needed_indeces = (x_mags > R_Earth) 
-        needed_events = sum(needed_indeces)
+        needed_events = sum(needed_indeces) # indices
         #print(100 - 100 * needed_events/Num_Events, "% done")
         
     return(x_vect_vals)

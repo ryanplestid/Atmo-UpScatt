@@ -1,4 +1,4 @@
-def main():
+def main():A
     print("Hello World")
     return 0
 
@@ -12,7 +12,7 @@ from numpy import sin, cos
 gA=1.27;
 MUP=1.79;
 MUN=-1.86;
-MP=0.94;
+MP=0.94; # Neutron and proton treated as having same mass
 MA=1;
 MV=0.71;
 
@@ -99,7 +99,7 @@ def decay_length(flav,U,mN,EN):
 ### Needs to be updated
 ####
 
-def d_sigma_d_cos_Theta_coherent(U,mN,Enu,cos_Theta,Qw):
+def dsigma_dcos_Theta_coherent(U,mN,Enu,cos_Theta,Qw):
     '''
     Determine the differential cross section for a coherent scattering at a specified angle
     
@@ -111,54 +111,55 @@ def d_sigma_d_cos_Theta_coherent(U,mN,Enu,cos_Theta,Qw):
         Qw: weak nuclear charge
         
     returns:
-        d_sigma_d_cos_Theta: differential upscattering cross section in cm^2 
+        dsigma_dcos_Theta: differential upscattering cross section in cm^2 
                             (float, same size as En)
     
     actions:
-        Computes the differential cross section in terms of MeV^{-2}, then
+        Computes the differential cross section in terms of GeV^{-2}, then
         converts it to cm^2
     '''
     #Set differential cross section to 0 if the mass is greater than the energy
     if mn >= Enu:
-        d_sigma_d_cos_Theta = 0
-        return(d_sigma_d_cos_Theta)
+        dsigma_d_cos_Theta = 0
+        return(dsigma_dcos_Theta)
     
 
     EN=Enu
-    t = (2*EN**2 - mN**2 - 2*EN*np.sqrt(EN**2 - mN**2) * cos_Theta) #Transfered momentum^2 (MeV^2)
+    t = (2*EN**2 - mN**2 - 2*EN*np.sqrt(EN**2 - mN**2) * cos_Theta) #Transfered momentum^2 (GeV^2)
 
-    d_sigma_dt= U**2*GF**2*Qw**2*Enu**2/(2*np.pi)*(1-0.25*mN**2/Enu**2+0.25*t/Enu**2)
+    dsigma_dt= U**2*GF**2*Qw**2*Enu**2/(2*np.pi)*(1-0.25*mN**2/Enu**2+0.25*t/Enu**2)
     dAbst_dcos_Theta=2*EN*np.sqrt(EN**2-mN**2)
-    Inv_Gev_to_cm = (0.1973) * 1e-13 # (MeV^-1 to fm) * (fm to cm)
-    d_sigma_d_cos_Theta = Inv_Gev_to_cm**2 *(d_sigma)*dAbst_dcos_Theta
+    Inv_Gev_to_cm = (0.1973) * 1e-13 # (GeV^-1 to fm) * (fm to cm)
+    dsigma_dcos_Theta = Inv_Gev_to_cm**2 *(dsigma)*dAbst_dcos_Theta
     
-    return(d_sigma_d_cos_Theta)
+    return(dsigma_dcos_Theta)
 
                                                 
-def d_sigma_d_cos_Theta_nucleon(anti_nu,nucleon,mN,Enu,cos_Theta):
+def dsigma_dcos_Theta_nucleon(anti_nu,nucleon,U,mN,Enu,cos_Theta):
     '''
     Determine the differential cross section for a coherent scattering at a specified angle
     
     args:
         anti_nu: either "nu" or "nu_bar"
+        nucleon: either "proton" or "neutron"
         U:  mixing matrix element. 
-        mn: mass of the lepton in GeV (float)
-        En: Energy of the lepton in GeV (float or array of floats)
+        mN: mass of the HNL in GeV (float)
+        Enu: Energy of the neutrino in GeV (float or array of floats)
         cos_Theta: cosine of the scattering angle (float, same size as En)
-        Qw: weak nuclear charge
+        
         
     returns:
-        d_sigma_d_cos_Theta: differential upscattering cross section in cm^2 
+        dsigma_dcos_Theta: differential upscattering cross section in cm^2 
                             (float, same size as En)
     
     actions:
-        Computes the differential cross section in terms of MeV^{-2}, then
+        Computes the differential cross section in terms of GeV^{-2}, then
         converts it to cm^2
     '''
     #Set differential cross section to 0 if the mass is greater than the energy
     if mn >= En:
-        d_sigma_d_cos_Theta = 0
-        return(d_sigma_d_cos_Theta)
+        dsigma_dcos_Theta = 0
+        return(dsigma_dcos_Theta)
                                 
     if nucleon=="p":
         tau3=+1
@@ -170,7 +171,7 @@ def d_sigma_d_cos_Theta_nucleon(anti_nu,nucleon,mN,Enu,cos_Theta):
     if anti_nu=="nu_bar":
         sgn=-1
 
-    if cos_Theta>=0:d
+    if cos_Theta>=0:
         EN=(np.sqrt(Enu**2*cos_Theta**2*(4(mN**2*(Enu**2*(cos_Theta**2-1)-Enu**MP-MP**2)\
                                           +4*Enu**2*MP**2+mN**4))) +(Enu**2+MP**2)*(2*Enu*M+mN**2))\
                                           *1/(2*(Enu*(1-cos_Theta)+M)*(Enu+Enu*cos_Theta+M))
@@ -218,17 +219,17 @@ def d_sigma_d_cos_Theta_nucleon(anti_nu,nucleon,mN,Enu,cos_Theta):
 
                                                     
 
-    Inv_Gev_to_cm = (0.1973) * 1e-13 # (MeV^-1 to fm) * (fm to cm)
-    d_sigma_d_cos_Theta = Inv_Gev_to_cm**2 *(d_sigma)*dAbst_dcos_Theta
+    Inv_Gev_to_cm = (0.1973) * 1e-13 # (GeV^-1 to fm) * (fm to cm)
+    dsigma_dcos_Theta = Inv_Gev_to_cm**2 *(dsigma)*dAbst_dcos_Theta
     
-    return(d_sigma_d_cos_Theta)
+    return(dsigma_dcos_Theta)
 
                                             
 
                                                 
 
-def Full_N_d_sigma_d_cos_Theta(U, mN, EN, cos_Theta, Zeds, R1s, Ss, num_dens,\
-                               scattering_channel="nucleon", anti_nu="nu", response="RFG"):
+def n_dsigma_dcos_Theta(U, mN, Enu, cos_Theta, Zed,  A_minus_Z, R1, S, num_dens,
+                               scattering_channel="nucleon",anti_nu="nu")
     '''
     Determine the differential cross section for a coherent and incoherent 
     scattering at a specified angle with the composition specified
@@ -249,13 +250,13 @@ def Full_N_d_sigma_d_cos_Theta(U, mN, EN, cos_Theta, Zeds, R1s, Ss, num_dens,\
                   does not affect coherent cross section. 
         
     returns:
-        N_d_sigma_d_cos_Theta: differential cross section times number dens
+        N_dsigma_dcos_Theta: differential cross section times number dens
                                 in cm^-1 (float, same size as En)
     '''
     #Set differential cross section to 0 if the mass is greater than the energy
     if mn >= En:
-        d_sigma_d_cos_Theta = 0
-        return(d_sigma_d_cos_Theta)
+        dsigma_d_cos_Theta = 0
+        return(dsigma_dcos_Theta)
     
     #Calculate the transfered momentum
 
@@ -263,13 +264,29 @@ def Full_N_d_sigma_d_cos_Theta(U, mN, EN, cos_Theta, Zeds, R1s, Ss, num_dens,\
 
         t = -(2*En**2 - mn**2 - 2*En*np.sqrt(EN**2 - mN**2) * cos_Theta) #Transfered momentum^2 (GeV^2)
     
-        q = np.sqrt(-t) #Transfered momentum (MeV)
-        d_sig_d_cos_Theta = d_sigma_d_cos_Theta_coherent(d,mn,En,cos_Theta,1)
+        q = np.sqrt(-t)*1000 #Transfered momentum (MeV)
+
+        FF2 = formFactorFit.Helm_FF2(q,R1,s) #Form factors^2 for the transferred momentum
+        
+        Qw= Zed*(1-4*SW**2) + A_minus_Z*(  
+        
+        N_dsigma_dcos_Theta = num_den * d_sig_d_cos_coh * FF2
+        d_sig_d_cos_Theta = dsigma_d_cos_Theta_coherent(d,mn,En,cos_Theta,Qw)
 
 
-    if scattering_channel="coherent":
+    if scattering_channel="nucleon":
+        #
+        # Nucleon level scattering
+        #
+
+        # No form factor or anything
+        # Could consider coulomb sum rule 
+        d_sig_d_cos_Theta = num_dens*(Zed*dsigma_dcos_Theta_nucleon(anti_nu,"proton",U,mN,Enu,cos_Theta)\
+                                      +A_minus_Z**dsigma_dcos_Theta_nucleon(anti_nu,"neutron",U,mN,Enu,cos_Theta) )
         
 
+
+        
     if scattering_channel="response":
         #
         # We can code somethnig up to sample t and omega 
@@ -283,67 +300,64 @@ def Full_N_d_sigma_d_cos_Theta(U, mN, EN, cos_Theta, Zeds, R1s, Ss, num_dens,\
 
     
     #Initialize the cross section as 0
-    N_d_sigma_d_cos_Theta = 0
-    
-    #Iterate through the nuclei
-    for Zed_index in range(len(Zeds)):
-        Zed = Zeds[Zed_index] #Atomic number
-        R1 = R1s[Zed_index] #Effective nuclear radius
-        s = Ss[Zed_index]  #Skin thickness
-        num_den = num_dens[Zed_index]  #fractional number density of the nucleus
-        
-        FF2 = formFactorFit.Helm_FF2(q,R1,s) #Form factors^2 for the transferred momentum
-        
-        N_d_sigma_d_cos_Theta += num_den * d_sig_d_cos_coh * Zed**2 * FF2
-    
-    return(N_d_sigma_d_cos_Theta)
+    N_dsigma_d_cos_Theta = 0
+         
 
-def N_Cross_Sec_from_radii(d, mn, En, cos_Theta, rs):
-    '''
-    Determine the differential cross section for a coherent and incoherent 
-    scattering at a specified angle with the radius of the interaction specified
     
+    return(N_dsigma_dcos_Theta)
+
+
+
+def N_Cross_Sec_from_radii(d, mn, Enu, cos_Theta, rs, channel="nucleon" ):
+    '''
+    Determine the number density weighted differential cross section for  
+    scattering at a specified angle with the radius of the interaction specified
+
+    i.e.  \sum_i n_i(r)x d\sigma_i/ d\cos\Theta
+
+
     args:
         d: dipole coupling constant in MeV^-1 (float)
         mn: mass of the lepton in GeV (float)
-        En: Energy of the lepton in GeV (float or array of floats)
-        cos_Theta: cosine of the scattering angle (float, same size as En)
+        Enu: Energy of neutrino  GeV (array of floats)
+        cos_Theta: cosine of the scattering angle (arrray of floats, same size as En)
         rs: Normalized radius of the location of the interaction (R_Earth = 1)
-            (float, same size as En)
+            (array of floats, same size as En)
+        channel: Determines scattering channel (string), default="nucleon", options={"coherent", "nucleon"}
         
     returns:
-        N_d_sigma_d_cos_Theta: differential cross section times number dens
+        N_dsigma_dcos_Theta: differential cross section times number dens
                                 in cm^-1 (float, same size as En)
         
     '''
-    N_d_sigma_d_cos_Theta = np.zeros(len(En))
+    N_dsigma_dcos_Theta = np.zeros(len(Enu))
     for r_index in range(len(rs)):
         r = rs[r_index]
         n_dens = earthComp.n_density(r)
-        Zeds,R1s,Ss,num_dens = (np.zeros(len(n_dens)-1),np.zeros(len(n_dens)-1),
-                                np.zeros(len(n_dens)-1),np.zeros(len(n_dens)-1))
-        
+                
         index = 0
         for element in n_dens.keys():
+
+            # Skip over case of electron
             if element == 'e':
                 continue
-            num_dens[index] = n_dens[element] # cm^(-3)
-            Zeds[index] = earthComp.atomic_number[element]
+
+            num_dens = n_dens[element] # cm^(-3)
+            A_minius_Z= earthComp.neutron_number[element]
             
             #Any element without a Helm fit parameters is treated as Silicon
+            # We approximate weak form factors by charge form factors
             try:
-                R1s[index] = formFactorFit.Helm_Dict[Element_Dict[element]]["R1"]
-                Ss[index] = formFactorFit.Helm_Dict[Element_Dict[element]]["s"]
+                R1s = formFactorFit.Helm_Dict[Element_Dict[element]]["R1"]
+                Ss = formFactorFit.Helm_Dict[Element_Dict[element]]["s"]
             except:
-                R1s[index] = formFactorFit.Helm_Dict[Element_Dict["Si"]]["R1"]
-                Ss[index] = formFactorFit.Helm_Dict[Element_Dict["Si"]]["s"]
-            index += 1
-        
-        N_d_sigma_d_cos_Theta[r_index] = Full_N_d_sigma_d_cos_Theta(d,mn,
-                                                                    En[r_index],cos_Theta[r_index],
-                                                                    Zeds, R1s, Ss, num_dens)
+                R1s = formFactorFit.Helm_Dict[Element_Dict["Si"]]["R1"]
+                Ss = formFactorFit.Helm_Dict[Element_Dict["Si"]]["s"]
+            
+            N_dsigma_dcos_Theta[r_index] += n_dsigma_dcos_Theta(d,mn,Enu[r_index],cos_Theta[r_index],
+                                                                         Zed, A_minus_Z, R1s, Ss, num_dens)
     
-    return(N_d_sigma_d_cos_Theta)
+    return(N_dsigma_dcos_Theta)
 
 
 
