@@ -282,7 +282,7 @@ def n_dsigma_dcos_Theta(U, mN, Enu, cos_Theta, Zed,  A_minus_Z, R1, S, num_dens,
         # No form factor or anything
         # Could consider coulomb sum rule 
         d_sig_d_cos_Theta = num_dens*(Zed*dsigma_dcos_Theta_nucleon(anti_nu,"proton",U,mN,Enu,cos_Theta)\
-                                      +A_minus_Z**dsigma_dcos_Theta_nucleon(anti_nu,"neutron",U,mN,Enu,cos_Theta) )
+                                      +A_minus_Z*dsigma_dcos_Theta_nucleon(anti_nu,"neutron",U,mN,Enu,cos_Theta) )
         
 
 
