@@ -268,7 +268,7 @@ def n_dsigma_dcos_Theta(U, mN, Enu, cos_Theta, Zed,  A_minus_Z, R1, S, num_dens,
 
         FF2 = formFactorFit.Helm_FF2(q,R1,s) #Form factors^2 for the transferred momentum
         
-        Qw= Zed*(1-4*SW**2) + A_minus_Z*(  
+        Qw= Zed*(1-4*SW**2) + A_minus_Z  
         
         N_dsigma_dcos_Theta = num_den * d_sig_d_cos_coh * FF2
         d_sig_d_cos_Theta = dsigma_d_cos_Theta_coherent(d,mn,En,cos_Theta,Qw)
