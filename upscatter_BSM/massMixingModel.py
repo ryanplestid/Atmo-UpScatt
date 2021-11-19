@@ -1,4 +1,4 @@
-def main():A
+def main():
     print("Hello World")
     return 0
 
@@ -63,8 +63,8 @@ def Gamma_tot(flav,mN,U):
                  Gamma_eta_nu(mN,U),\
                  Gamma_eta_prime_nu(mN,U),\
                  Gamma_rho_nu(mN,U),\
-                 Gamma_omega_nu(mN,U),\ 
-                 Gamma_phi_nu(mN,U),\ 
+                 Gamma_omega_nu(mN,U),\
+                 Gamma_phi_nu(mN,U),\
                  Gamma_pi_e(flav,mN,U),\
                  Gamma_pi_mu(flav,mN,U),\
                  Gamma_K_e(flav,mN,U),\
@@ -82,9 +82,9 @@ def decay_length(flav,U,mN,EN):
     # Returns decay lenght in units of the Earth's radius
     
     R_Earth_in_km = 6378.1
-    c_tau=HBAR_C*Gamma_total(flav,U,mN)/R_Earth_in_km
+    c_tau=HBAR_C*Gamma_tot(flav,U,mN)/R_Earth_in_km
 
-    if EN>mN:
+    if any(EN>mN):
         beta_gamma= EN/mN * np.sqrt(1-mN**2/EN**2)
         Lambda = c_tau*beta_gamma
     else:
@@ -119,8 +119,8 @@ def dsigma_dcos_Theta_coherent(U,mN,Enu,cos_Theta,Qw):
         converts it to cm^2
     '''
     #Set differential cross section to 0 if the mass is greater than the energy
-    if mn >= Enu:
-        dsigma_d_cos_Theta = 0
+    if mN >= Enu:
+        dsigma_dcos_Theta = 0
         return(dsigma_dcos_Theta)
     
 
@@ -130,7 +130,7 @@ def dsigma_dcos_Theta_coherent(U,mN,Enu,cos_Theta,Qw):
     dsigma_dt= U**2*GF**2*Qw**2*Enu**2/(2*np.pi)*(1-0.25*mN**2/Enu**2+0.25*t/Enu**2)
     dAbst_dcos_Theta=2*EN*np.sqrt(EN**2-mN**2)
     Inv_Gev_to_cm = (0.1973) * 1e-13 # (GeV^-1 to fm) * (fm to cm)
-    dsigma_dcos_Theta = Inv_Gev_to_cm**2 *(dsigma)*dAbst_dcos_Theta
+    dsigma_dcos_Theta = Inv_Gev_to_cm**2 *(dsigma_dt)*dAbst_dcos_Theta
     
     return(dsigma_dcos_Theta)
 
@@ -157,13 +157,13 @@ def dsigma_dcos_Theta_nucleon(anti_nu,nucleon,U,mN,Enu,cos_Theta):
         converts it to cm^2
     '''
     #Set differential cross section to 0 if the mass is greater than the energy
-    if mn >= En:
+    if mN >= Enu:
         dsigma_dcos_Theta = 0
         return(dsigma_dcos_Theta)
                                 
-    if nucleon=="p":
+    if nucleon=="proton":
         tau3=+1
-    if nucleon=="n":
+    if nucleon=="neutron":
         tau3=-1
 
     if anti_nu=="nu":
@@ -172,22 +172,23 @@ def dsigma_dcos_Theta_nucleon(anti_nu,nucleon,U,mN,Enu,cos_Theta):
         sgn=-1
 
     if cos_Theta>=0:
-        EN=(np.sqrt(Enu**2*cos_Theta**2*(4(mN**2*(Enu**2*(cos_Theta**2-1)-Enu**MP-MP**2)\
-                                          +4*Enu**2*MP**2+mN**4))) +(Enu**2+MP**2)*(2*Enu*M+mN**2))\
-                                          *1/(2*(Enu*(1-cos_Theta)+M)*(Enu+Enu*cos_Theta+M))
+        EN=(np.sqrt(Enu**2*cos_Theta**2*(4*(mN**2*(Enu**2*(cos_Theta**2-1)-Enu*MP-MP**2)\
+                                          +4*Enu**2*MP**2+mN**4))) +(Enu**2+MP**2)*(2*Enu*MP+mN**2))\
+                                          *1/(2*(Enu*(1-cos_Theta)+MP)*(Enu+Enu*cos_Theta+MP))
     else:
-        EN=(np.sqrt(Enu**2*cos_Theta**2*(4(mN**2*(Enu**2*(cos_Theta**2-1)-Enu**MP-MP**2)\
-                                          +4*Enu**2*MP**2+mN**4))) -(Enu**2+MP**2)*(2*Enu*M+mN**2))\
-                                          *1/(2*(Enu*(1-cos_Theta)+M)*(Enu+Enu*cos_Theta+M))
-        
+        EN=(np.sqrt(Enu**2*cos_Theta**2*(4*(mN**2*(Enu**2*(cos_Theta**2-1)-Enu*MP-MP**2)\
+                                          +4*Enu**2*MP**2+mN**4))) -(Enu**2+MP**2)*(2*Enu*MP+mN**2))\
+                                          *1/(2*(Enu*(1-cos_Theta)+MP)*(Enu+Enu*cos_Theta+MP))
+    
+
     PN=np.sqrt(EN**2-mN**2)
     t=mN**2-2*(Enu*EN -Enu*PN*cos_Theta)
 
-    assert(t+2*mN*(Enu-EN)<1E-6 )
+    assert(t+2*mN*(Enu-EN)<1E-6)
 
     dAbst_dcos_Theta=2*Enu*PN
     
-    s=2 Enu*MP+MP**2
+    s=2 *Enu*MP+MP**2
     u=2*MP**2+mN**2-s-t
 
 
@@ -210,7 +211,7 @@ def dsigma_dcos_Theta_nucleon(anti_nu,nucleon,U,mN,Enu,cos_Theta):
     FP=4*MP**2*gA/(MPI**2-t)
 
     A=(mN**2-t)/MP**2 *( (1+eta)*FA**2-(1-eta)*F1**2+eta*(1-eta)*F2**2+4*eta*F1*F2\
-                         -0.25*mN**2/MP**2*( (F1+F2)**2+(FA+2*FP)**2-(4-t/MP**2)FP**2) )
+                         -0.25*mN**2/MP**2*( (F1+F2)**2+(FA+2*FP)**2-(4-t/MP**2)*FP**2) )
     B= -t/MP**2*FA*(F1+F2)
     C= 0.25*(FA**2+F1**2+eta*F2**2)
 
@@ -220,7 +221,7 @@ def dsigma_dcos_Theta_nucleon(anti_nu,nucleon,U,mN,Enu,cos_Theta):
                                                     
 
     Inv_Gev_to_cm = (0.1973) * 1e-13 # (GeV^-1 to fm) * (fm to cm)
-    dsigma_dcos_Theta = Inv_Gev_to_cm**2 *(dsigma)*dAbst_dcos_Theta
+    dsigma_dcos_Theta = Inv_Gev_to_cm**2 *(dsigma_dt)*dAbst_dcos_Theta
     
     return(dsigma_dcos_Theta)
 
@@ -229,7 +230,7 @@ def dsigma_dcos_Theta_nucleon(anti_nu,nucleon,U,mN,Enu,cos_Theta):
                                                 
 
 def n_dsigma_dcos_Theta(U, mN, Enu, cos_Theta, Zed,  A_minus_Z, R1, S, num_dens,
-                               scattering_channel="nucleon",anti_nu="nu")
+                               scattering_channel="nucleon",anti_nu="nu"):
     '''
     Determine the differential cross section for a coherent and incoherent 
     scattering at a specified angle with the composition specified
@@ -254,61 +255,45 @@ def n_dsigma_dcos_Theta(U, mN, Enu, cos_Theta, Zed,  A_minus_Z, R1, S, num_dens,
                                 in cm^-1 (float, same size as En)
     '''
     #Set differential cross section to 0 if the mass is greater than the energy
-    if mn >= En:
-        dsigma_d_cos_Theta = 0
+    if mN >= Enu:
+        dsigma_dcos_Theta = 0
         return(dsigma_dcos_Theta)
     
     #Calculate the transfered momentum
-
-    if scattering_channel="coherent":
-
-        t = -(2*En**2 - mn**2 - 2*En*np.sqrt(EN**2 - mN**2) * cos_Theta) #Transfered momentum^2 (GeV^2)
+    if scattering_channel=="coherent":
+        t = -(2*Enu**2 - mN**2 - 2*Enu*np.sqrt(Enu**2 - mN**2) * cos_Theta) #Transfered momentum^2 (GeV^2)
     
         q = np.sqrt(-t)*1000 #Transfered momentum (MeV)
-
-        FF2 = formFactorFit.Helm_FF2(q,R1,s) #Form factors^2 for the transferred momentum
+        FF2 = formFactorFit.Helm_FF2(q,R1,S) #Form factors^2 for the transferred momentum
         
         Qw= Zed*(1-4*SW**2) + A_minus_Z  
         
-        N_dsigma_dcos_Theta = num_den * d_sig_d_cos_coh * FF2
-        d_sig_d_cos_Theta = dsigma_d_cos_Theta_coherent(d,mn,En,cos_Theta,Qw)
-
-
-    if scattering_channel="nucleon":
+        d_sig_d_cos_coh = dsigma_dcos_Theta_coherent(U,mN,Enu,cos_Theta,Qw)
+        N_dsigma_dcos_Theta = num_dens * d_sig_d_cos_coh * FF2
+    if scattering_channel=="nucleon":
         #
         # Nucleon level scattering
         #
-
         # No form factor or anything
         # Could consider coulomb sum rule 
-        d_sig_d_cos_Theta = num_dens*(Zed*dsigma_dcos_Theta_nucleon(anti_nu,"proton",U,mN,Enu,cos_Theta)\
+        N_dsigma_dcos_Theta = num_dens*(Zed*dsigma_dcos_Theta_nucleon(anti_nu,"proton",U,mN,Enu,cos_Theta)\
                                       +A_minus_Z*dsigma_dcos_Theta_nucleon(anti_nu,"neutron",U,mN,Enu,cos_Theta) )
         
-
-
         
-    if scattering_channel="response":
+    if scattering_channel=="response":
         #
         # We can code somethnig up to sample t and omega 
         # given a response function and then calculate 
         # E_nu given that data
         #
         return(0)
-
     
     #Calculate the coherent cross sections for Z = 1
 
-    
-    #Initialize the cross section as 0
-    N_dsigma_d_cos_Theta = 0
-         
-
-    
     return(N_dsigma_dcos_Theta)
 
 
-
-def N_Cross_Sec_from_radii(d, mn, Enu, cos_Theta, rs, channel="nucleon" ):
+def N_Cross_Sec_from_radii(U, mn, Enu, cos_Theta, rs, channel="nucleon" ):
     '''
     Determine the number density weighted differential cross section for  
     scattering at a specified angle with the radius of the interaction specified
@@ -317,7 +302,7 @@ def N_Cross_Sec_from_radii(d, mn, Enu, cos_Theta, rs, channel="nucleon" ):
 
 
     args:
-        d: dipole coupling constant in MeV^-1 (float)
+        U: Mass mixing coupling
         mn: mass of the lepton in GeV (float)
         Enu: Energy of neutrino  GeV (array of floats)
         cos_Theta: cosine of the scattering angle (arrray of floats, same size as En)
@@ -337,13 +322,12 @@ def N_Cross_Sec_from_radii(d, mn, Enu, cos_Theta, rs, channel="nucleon" ):
                 
         index = 0
         for element in n_dens.keys():
-
             # Skip over case of electron
             if element == 'e':
                 continue
-
             num_dens = n_dens[element] # cm^(-3)
-            A_minius_Z= earthComp.neutron_number[element]
+            A_minus_Z= earthComp.neutron_number[element]
+            Zed= earthComp.atomic_number[element]
             
             #Any element without a Helm fit parameters is treated as Silicon
             # We approximate weak form factors by charge form factors
@@ -354,22 +338,15 @@ def N_Cross_Sec_from_radii(d, mn, Enu, cos_Theta, rs, channel="nucleon" ):
                 R1s = formFactorFit.Helm_Dict[Element_Dict["Si"]]["R1"]
                 Ss = formFactorFit.Helm_Dict[Element_Dict["Si"]]["s"]
             
-            N_dsigma_dcos_Theta[r_index] += n_dsigma_dcos_Theta(d,mn,Enu[r_index],cos_Theta[r_index],
+            N_dsigma_dcos_Theta[r_index] += n_dsigma_dcos_Theta(U,mn,Enu[r_index],cos_Theta[r_index],
                                                                          Zed, A_minus_Z, R1s, Ss, num_dens)
     
     return(N_dsigma_dcos_Theta)
-
-
-
 ### Every decay mode
-
-
 def lambda_Kallen(a,b,c):
     return(a**2+b**2+c**2-2*a*b-2*a*c-2*b*c)
-
 def Gamma_3nu(mN,U):
     return(4*GF**2*mN**5*U**2/(768*np.pi**3))
-
 def Gamma_2lep_nu(C1,C2,x,mN,U):
     if x>=0.5:
         return(0)
@@ -380,42 +357,34 @@ def Gamma_2lep_nu(C1,C2,x,mN,U):
                                             + 4*C2*(x**2*(2+10*x**2-12*x**4)*np.sqrt(1-4*x**2) +\
                                                     6*x**4*(1-2*x**2+2*x**4)*L) )\
                )
-
 def Gamma_P_nu(fP,mP,mN,U):
     x=mP/mN
     if x<1:
         return(GF**2*fP*mN**3*U**2*(1-x**2)**2/(32*np.pi) )
     else:
         return(0)
-
 def Gamma_P_ell(fP,mP,mEll,mN,U):
     xh=mP/mN
     xEll=mEll/mN
-
     if xh+xEll>1:
         return(0)
     else:
         return(GF**2*fP*mN**3*U**2*((1-xEll**2)**2-xh**2*(1+xEll**2))\
-               *np.sqrt(lambda_kallen(1,xh**2,xEll*2)/(16*np.pi) ) )
-
+               *np.sqrt(lambda_Kallen(1,xh**2,xEll*2)/(16*np.pi) ) )
 def Gamma_V_nu(gV,kappaV,mV,mN,U):
     xh=mV/mN;
-
     if xh>=1:
         return(0)
     else:
         return(GF**2*kappaV**2*gV**2*VUD**2*mN**3*U**2/16/np.pi/mV**2*(1-xh**2)**2*(1+2*xh**2) )
-
-
 def Gamma_V_ell(gV,mV,mEll,mN,U):
     xh=mV/mN
     xEll=mEll/mN
-
     if xh+xEll>=1:
         return(0)
     else:
         return(GF**2*gV**2*VUD**2*mN**3*U**2/16/np.pi/mV**2*((1-xEll**2)**2+xh**2*(1+xEll**2)-2*xh**4)\
-               *np.sqrt(lambda_kallen(1,xh**2,xEll**2) ) )
+               *np.sqrt(lambda_Kallen(1,xh**2,xEll**2) ) )
 
 
 def Gamma_pi_nu(mN,U):
@@ -433,7 +402,7 @@ def Gamma_rho_nu(mN,U):
     return(Gamma_V_nu(GRHO,KAPPARHO,MRHO,mN,U) )
 
 def Gamma_omega_nu(mN,U):
-    return(Gamma_V_nu(GOMEGA,KAPPAOMEGA,MOMEGA,mN,U) )
+    return(Gamma_V_nu(GOMEGA,KAPPAOMEGA,MOEMGA,mN,U) )
 
 def Gamma_phi_nu(mN,U):
     return(Gamma_V_nu(GPHI,KAPPAPHI,MPHI,mN,U) )
@@ -492,7 +461,7 @@ def Gamma_rho_mu(flav,mN,U):
 def Gamma_2e_nu(flav,mN,U):
 
     x=ME/mN
-    assert(flav=="e" or flav=="mu" or flav=="tau"):
+    assert(flav=="e" or flav=="mu" or flav=="tau")
     
     if flav=="e":
         C1=0.25*(1+4*SW**2+8*SW**4)
@@ -507,7 +476,7 @@ def Gamma_2e_nu(flav,mN,U):
 def Gamma_2mu_nu(flav,mN,U):
 
     x=ME/mN
-    assert(flav=="e" or flav=="mu" or flav=="tau"):
+    assert(flav=="e" or flav=="mu" or flav=="tau")
     
     if flav=="mu":
         C1=0.25*(1+4*SW**2+8*SW**4)
