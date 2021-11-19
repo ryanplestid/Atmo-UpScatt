@@ -289,5 +289,42 @@ def Sample_Neutrino_Entry_Position(X, Y, cos_Theta):
     W[:,2] = X[:,2] - v_in_hat[:,2] * v_in_mag
     return(W)
 
+def energyOut(Enu,cos_Theta,mN,M_target,root_choice=1):
+    '''
+    args: 
+        Enu: Energy of incident neutrino
+        cos_Theta: scattering angle  
+        mN       : mass of upscattered particle
+        M_target : mass of target particle (assumed stationary in the lab frame)
+        branch   : branch of multi-valued solution desired 
+                                                   default =1 (high energy) 
+                                                   alternative option = 2 (low energy) 
+    returns: 
+        EN : energy of HNL after scattering event
+    '''
+
+    M=M_target
+    kappa= (mN - 4*Enu*M*mN**2 - 4*M**2*mN**2 + 4*Enu**2*(M**2 - mN**2))/(4.*Enu**2*mN**2)
+
+    # parameters of relevant quadratic equation for E_nu 
+    a=4*(-((-1 + cos_Theta**2)*Enu**2) + 2*Enu*M + M**2)
+    b=-4*(Enu + M)*(2*Enu*M + mN**2)
+    c=4*cos_Theta**2*Enu**2*mN**2 + (2*Enu*M + mN**2)**2
+    
+    if kappa>=0:
+        if cos_Theta<1:
+            return( (-b+np.sqrt(b**2-4*a*c))/(2*a) )
+        elif cos_Theta<=1:
+            return( (-b-np.sqrt(b**2-4*a*c))/(2*a) )
+    if kappa<0:
+        if branch=1:
+            return( (-b+np.sqrt(b**2-4*a*c))/(2*a) )
+        elif branch=2:
+            return( (-b-np.sqrt(b**2-4*a*c))/(2*a) )
+        else:
+            print("You did not input a branch value of 1 or 2")
+            return(0)
+        
+
 if __name__ == "__main__":
     main()

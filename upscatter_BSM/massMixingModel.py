@@ -6,6 +6,7 @@ def main():
 import numpy as np #Package for array functions
 import formFactorFit
 import earthComp
+import SampleEvents as sampleEvents
 from numpy import random as rand
 from numpy import sin, cos
 
@@ -57,7 +58,20 @@ Element_Dict = dict({"O": "8 16",
 
 
 def Gamma_tot(flav,mN,U):
+    '''
+    args:
+        flav: non-zero flavor mixnig with HNL string options: "e" "mu" or "tau"
+          mN: mass of the HNL lepton in GeV (float)
+           U:  mixing matrix element. 
+        
+    returns:
+           \Gamma_total 
+    
+    actions:
+        Computes the decay rate of an HNL summed over all channels below ~ 1 GeV
+    '''
 
+    args: 
     Gamma_List=[ Gamma_3nu(mN,U), \
                  Gamma_pi_nu(mN,U),\
                  Gamma_eta_nu(mN,U),\
@@ -76,6 +90,88 @@ def Gamma_tot(flav,mN,U):
                 ]
 
     return(sum(Gamma_List)) 
+
+def Gamma_partial(flav,mN,U,final_state="nu e e"):
+    '''
+    args:
+           flav:  non-zero flavor mixnig with HNL string options: "e" "mu" or "tau"
+             mN:  mass of the HNL lepton in GeV (float)
+              U:  mixing matrix element. 
+    final_state:  string, default= "nu e e" 
+
+                          options: "nu e e"
+                                   "nu mu mu"
+                                   "nu nu nu"
+                                   "pi nu"
+                                   "eta nu"
+                                   "eta' nu"
+                                   "rho nu"
+                                   "omega nu"
+                                   "phi nu"
+                                   "pi e"
+                                   "pi mu"
+                                   "K e"
+                                   "K mu"
+                                   "rho e"
+                                   "rho mu" 
+
+    returns:
+           \Gamma(N-> final state) in units of GeV
+    
+    actions:
+        Computes the decay rate of an HNL summed over all channels below ~ 1 GeV
+
+    '''
+    if final_state="nu e e":
+        return(Gamma_2e_nu(flav,mN,U))
+
+    if final_state="nu mu mu":
+        return(Gamma_2mu_nu(flav,mN,U))
+
+    elif final_state="nu nu nu":
+        return( Gamma_3nu(mN,U))
+
+    elif final_state="pi nu":
+        return( Gamma_pi_nu(mN,U))
+
+    elif final_state="eta nu": 
+        return( Gamma_eta_nu(mN,U))
+
+    elif final_state="eta' nu": 
+        return( Gamma_eta_prime_nu(mN,U))
+
+    elif final_state="rho nu": 
+        return( Gamma_rho_nu(mN,U))
+
+    elif final_state="omega nu": 
+        return( Gamma_omega_nu(mN,U))
+
+    elif final_state="phi nu": 
+        return( Gamma_phi_nu(mN,U))
+
+    elif final_state="pi e": 
+        return( Gamma_pi_e(flav,mN,U))
+
+    elif final_state="pi mu": 
+        return( Gamma_pi_mu(flav,mN,U))
+
+    elif final_state="K e": 
+        return( Gamma_K_e(flav,mN,U))
+
+    elif final_state="K mu": 
+        return( Gamma_K_mu(flav,mN,U))
+
+    elif final_state="rho e": 
+        return( Gamma_rho_e(flav,mN,U))
+
+    elif final_state="rho mu": 
+        return( Gamma_rho_mu(flav,mN,U))
+
+    else:
+        print("Final state not included in code")
+        return(0)
+
+
 
 
 def decay_length(flav,U,mN,EN):
@@ -135,7 +231,7 @@ def dsigma_dcos_Theta_coherent(U,mN,Enu,cos_Theta,Qw):
     return(dsigma_dcos_Theta)
 
                                                 
-def dsigma_dcos_Theta_nucleon(anti_nu,nucleon,U,mN,Enu,cos_Theta):
+def dsigma_dcos_Theta_nucleon(anti_nu,nucleon,U,mN,Enu,cos_Theta,branch=1):
     '''
     Determine the differential cross section for a coherent scattering at a specified angle
     
@@ -146,7 +242,8 @@ def dsigma_dcos_Theta_nucleon(anti_nu,nucleon,U,mN,Enu,cos_Theta):
         mN: mass of the HNL in GeV (float)
         Enu: Energy of the neutrino in GeV (float or array of floats)
         cos_Theta: cosine of the scattering angle (float, same size as En)
-        
+        branch   : Determines which branch of the EN solution one would like to choose 
+                   default = 1 (high energy branch), set to =2 for lower energy branch
         
     returns:
         dsigma_dcos_Theta: differential upscattering cross section in cm^2 
@@ -171,15 +268,8 @@ def dsigma_dcos_Theta_nucleon(anti_nu,nucleon,U,mN,Enu,cos_Theta):
     if anti_nu=="nu_bar":
         sgn=-1
 
-    if cos_Theta>=0:
-        EN=(np.sqrt(Enu**2*cos_Theta**2*(4*(mN**2*(Enu**2*(cos_Theta**2-1)-Enu*MP-MP**2)\
-                                          +4*Enu**2*MP**2+mN**4))) +(Enu**2+MP**2)*(2*Enu*MP+mN**2))\
-                                          *1/(2*(Enu*(1-cos_Theta)+MP)*(Enu+Enu*cos_Theta+MP))
-    else:
-        EN=(np.sqrt(Enu**2*cos_Theta**2*(4*(mN**2*(Enu**2*(cos_Theta**2-1)-Enu*MP-MP**2)\
-                                          +4*Enu**2*MP**2+mN**4))) -(Enu**2+MP**2)*(2*Enu*MP+mN**2))\
-                                          *1/(2*(Enu*(1-cos_Theta)+MP)*(Enu+Enu*cos_Theta+MP))
-    
+    #Only works with the high energy branch in the case of forward scattering
+    EN=sampleEvents.energyOut(Enu,cos_Theta,mN,MP,branch)
 
     PN=np.sqrt(EN**2-mN**2)
     t=mN**2-2*(Enu*EN -Enu*PN*cos_Theta)
@@ -230,7 +320,7 @@ def dsigma_dcos_Theta_nucleon(anti_nu,nucleon,U,mN,Enu,cos_Theta):
                                                 
 
 def n_dsigma_dcos_Theta(U, mN, Enu, cos_Theta, Zed,  A_minus_Z, R1, S, num_dens,
-                               scattering_channel="nucleon",anti_nu="nu"):
+                               scattering_channel="nucleon",anti_nu="nu",branch=1):
     '''
     Determine the differential cross section for a coherent and incoherent 
     scattering at a specified angle with the composition specified
@@ -249,6 +339,9 @@ def n_dsigma_dcos_Theta(U, mN, Enu, cos_Theta, Zed,  A_minus_Z, R1, S, num_dens,
              options={"nucleon", "coherent", or "response_function"}
         anti_nu: neutrino vs anti-neutrino (string) options-{"nu","nu_bar"}   
                   does not affect coherent cross section. 
+        branch : Branch of the E_N solution function
+                 default=1
+                 options = 1 (high energy branch) or 2 (low energy branch)
         
     returns:
         N_dsigma_dcos_Theta: differential cross section times number dens
@@ -276,8 +369,8 @@ def n_dsigma_dcos_Theta(U, mN, Enu, cos_Theta, Zed,  A_minus_Z, R1, S, num_dens,
         #
         # No form factor or anything
         # Could consider coulomb sum rule 
-        N_dsigma_dcos_Theta = num_dens*(Zed*dsigma_dcos_Theta_nucleon(anti_nu,"proton",U,mN,Enu,cos_Theta)\
-                                      +A_minus_Z*dsigma_dcos_Theta_nucleon(anti_nu,"neutron",U,mN,Enu,cos_Theta) )
+        N_dsigma_dcos_Theta = num_dens*(Zed*dsigma_dcos_Theta_nucleon(anti_nu,"proton",U,mN,Enu,cos_Theta,branch)\
+                                      +A_minus_Z*dsigma_dcos_Theta_nucleon(anti_nu,"neutron",U,mN,Enu,cos_Theta,branch) )
         
         
     if scattering_channel=="response":
@@ -342,11 +435,21 @@ def N_Cross_Sec_from_radii(U, mn, Enu, cos_Theta, rs, channel="nucleon" ):
                                                                          Zed, A_minus_Z, R1s, Ss, num_dens)
     
     return(N_dsigma_dcos_Theta)
+
+
+
+
 ### Every decay mode
+### No doc strings
+### Intended for internal use
+
+
 def lambda_Kallen(a,b,c):
     return(a**2+b**2+c**2-2*a*b-2*a*c-2*b*c)
+
 def Gamma_3nu(mN,U):
     return(4*GF**2*mN**5*U**2/(768*np.pi**3))
+
 def Gamma_2lep_nu(C1,C2,x,mN,U):
     if x>=0.5:
         return(0)
@@ -488,7 +591,7 @@ def Gamma_2mu_nu(flav,mN,U):
     return(Gamma_2lep_nu(C1,C2,x,mN,U) )
 
 
-## No tau mode because we assume m_N< 1.5 GeV or so 
+## No tau mode because we assume m_N \lesssim  1.5 GeV
 
 
 if __name__ == "__main__":
