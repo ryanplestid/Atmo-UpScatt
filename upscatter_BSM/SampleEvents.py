@@ -312,9 +312,9 @@ def energyOut(Enu,cos_Theta,mN,M_target,root_choice=1):
     c=4*cos_Theta**2*Enu**2*mN**2 + (2*Enu*M + mN**2)**2
     
     if kappa>=0:
-        if cos_Theta<1:
+        if cos_Theta>0:
             return( (-b+np.sqrt(b**2-4*a*c))/(2*a) )
-        elif cos_Theta<=1:
+        elif cos_Theta<=0:
             return( (-b-np.sqrt(b**2-4*a*c))/(2*a) )
     if kappa<0:
         if branch=1:
