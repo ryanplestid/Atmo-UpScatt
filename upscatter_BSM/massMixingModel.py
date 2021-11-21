@@ -178,7 +178,7 @@ def decay_length(flav,U,mN,EN):
     # Returns decay lenght in units of the Earth's radius
     
     R_Earth_in_km = 6378.1
-    c_tau=HBAR_C*Gamma_tot(flav,U,mN)/R_Earth_in_km
+    c_tau=HBAR_C/Gamma_tot(flav,U,mN)/R_Earth_in_km
 
     if any(EN>mN):
         beta_gamma= EN/mN * np.sqrt(1-mN**2/EN**2)
