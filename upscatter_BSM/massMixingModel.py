@@ -74,7 +74,7 @@ def Gamma_tot(flav,mN,U):
     Gamma_List=[ Gamma_3nu(mN,U), \
                  Gamma_2e_nu(flav,mN,U),\
                  Gamma_2mu_nu(flav,mN,U)\
-                 Gamma_e_mu_nu(mN,U),\
+                 Gamma_e_mu_nu(flav,mN,U),\
                  Gamma_pi_nu(mN,U),\
                  Gamma_eta_nu(mN,U),\
                  Gamma_eta_prime_nu(mN,U),\
@@ -130,7 +130,7 @@ def Gamma_partial(flav,mN,U,final_state="nu e e"):
         return(Gamma_2mu_nu(flav,mN,U))
 
     elif final_state="nu e mu":
-        return(Gamma_e_mu_nu(mN,U))
+        return(Gamma_e_mu_nu(flav,mN,U))
 
     elif final_state="nu nu nu":
         return( Gamma_3nu(mN,U))
@@ -456,7 +456,7 @@ def Gamma_3nu(mN,U):
     return(4*GF**2*mN**5*U**2/(768*np.pi**3))
 
 
-def Gamma_e_mu_nu(mN,U):
+def Gamma_e_mu_nu(flav,mN,U):
     x1=ME/mN
     x2=MMU/mN
 
@@ -466,10 +466,19 @@ def Gamma_e_mu_nu(mN,U):
     
     I_ps=(1-8*x2**2+8*x2**6-x2**8-12*x2**4*np.log(x2**2) )
 
+    if flav=="tau":
+        return(0)
+    else:
+        continue
+    
     if x1+x2>=1:
         return(0)
     else:
-        return(GF**2*mN**5/(192*np.pi**3)*U**2*I_ps
+        if flav=="e" or flav=="mu":
+            return(GF**2*mN**5/(192*np.pi**3)*U**2*I_ps)
+        else:
+            print("Flavour does not exist")
+            return(0)
 
         
 def Gamma_2lep_nu(C1,C2,x,mN,U):
