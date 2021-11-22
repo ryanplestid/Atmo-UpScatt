@@ -71,8 +71,10 @@ def Gamma_tot(flav,mN,U):
         Computes the decay rate of an HNL summed over all channels below ~ 1 GeV
     '''
 
-    args: 
     Gamma_List=[ Gamma_3nu(mN,U), \
+                 Gamma_2e_nu(flav,mN,U),\
+                 Gamma_2mu_nu(flav,mN,U)\
+                 Gamma_e_mu_nu(mN,U),\
                  Gamma_pi_nu(mN,U),\
                  Gamma_eta_nu(mN,U),\
                  Gamma_eta_prime_nu(mN,U),\
@@ -85,8 +87,6 @@ def Gamma_tot(flav,mN,U):
                  Gamma_K_mu(flav,mN,U),\
                  Gamma_rho_e(flav,mN,U),\
                  Gamma_rho_mu(flav,mN,U),\
-                 Gamma_2e_nu(flav,mN,U),\
-                 Gamma_2mu_nu(flav,mN,U)\
                 ]
 
     return(sum(Gamma_List)) 
@@ -101,6 +101,7 @@ def Gamma_partial(flav,mN,U,final_state="nu e e"):
 
                           options: "nu e e"
                                    "nu mu mu"
+                                   "nu e mu"
                                    "nu nu nu"
                                    "pi nu"
                                    "eta nu"
@@ -125,8 +126,11 @@ def Gamma_partial(flav,mN,U,final_state="nu e e"):
     if final_state="nu e e":
         return(Gamma_2e_nu(flav,mN,U))
 
-    if final_state="nu mu mu":
+    elif final_state="nu mu mu":
         return(Gamma_2mu_nu(flav,mN,U))
+
+    elif final_state="nu e mu":
+        return(Gamma_e_mu_nu(mN,U))
 
     elif final_state="nu nu nu":
         return( Gamma_3nu(mN,U))
@@ -211,8 +215,8 @@ def dsigma_dcos_Theta_coherent(U,mN,Enu,cos_Theta,Qw):
                             (float, same size as En)
     
     actions:
-        Computes the differential cross section in terms of GeV^{-2}, then
-        converts it to cm^2
+        Computes the differential cross section in terms of GeV^{-2}, 
+        then converts it to cm^2
     '''
     #Set differential cross section to 0 if the mass is greater than the energy
     if mN >= Enu:
@@ -226,6 +230,7 @@ def dsigma_dcos_Theta_coherent(U,mN,Enu,cos_Theta,Qw):
     dsigma_dt= U**2*GF**2*Qw**2*Enu**2/(2*np.pi)*(1-0.25*mN**2/Enu**2+0.25*t/Enu**2)
     dAbst_dcos_Theta=2*EN*np.sqrt(EN**2-mN**2)
     Inv_Gev_to_cm = (0.1973) * 1e-13 # (GeV^-1 to fm) * (fm to cm)
+
     dsigma_dcos_Theta = Inv_Gev_to_cm**2 *(dsigma_dt)*dAbst_dcos_Theta
     
     return(dsigma_dcos_Theta)
@@ -450,6 +455,23 @@ def lambda_Kallen(a,b,c):
 def Gamma_3nu(mN,U):
     return(4*GF**2*mN**5*U**2/(768*np.pi**3))
 
+
+def Gamma_e_mu_nu(mN,U):
+    x1=ME/mN
+    x2=MMU/mN
+
+    # If HNL is heavy enough to make a muon then it is safe
+    # at the part per thousand level to neglect electron mass
+    # correction are O(me^2/mu^2) \sim (1/200)^2 < 10^{-4}
+    
+    I_ps=(1-8*x2**2+8*x2**6-x2**8-12*x2**4*np.log(x2**2) )
+
+    if x1+x2>=1:
+        return(0)
+    else:
+        return(GF**2*mN**5/(192*np.pi**3)*U**2*I_ps
+
+        
 def Gamma_2lep_nu(C1,C2,x,mN,U):
     if x>=0.5:
         return(0)
