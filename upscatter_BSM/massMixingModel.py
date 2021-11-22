@@ -65,7 +65,7 @@ def Gamma_tot(flav,mN,U):
            U:  mixing matrix element. 
         
     returns:
-           \Gamma_total 
+           \Gamma_total in units GeV
     
     actions:
         Computes the decay rate of an HNL summed over all channels below ~ 1 GeV
@@ -466,6 +466,7 @@ def Gamma_P_nu(fP,mP,mN,U):
         return(GF**2*fP*mN**3*U**2*(1-x**2)**2/(32*np.pi) )
     else:
         return(0)
+    
 def Gamma_P_ell(fP,mP,mEll,mN,U):
     xh=mP/mN
     xEll=mEll/mN
@@ -474,12 +475,14 @@ def Gamma_P_ell(fP,mP,mEll,mN,U):
     else:
         return(GF**2*fP*mN**3*U**2*((1-xEll**2)**2-xh**2*(1+xEll**2))\
                *np.sqrt(lambda_Kallen(1,xh**2,xEll*2)/(16*np.pi) ) )
+    
 def Gamma_V_nu(gV,kappaV,mV,mN,U):
     xh=mV/mN;
     if xh>=1:
         return(0)
     else:
         return(GF**2*kappaV**2*gV**2*VUD**2*mN**3*U**2/16/np.pi/mV**2*(1-xh**2)**2*(1+2*xh**2) )
+    
 def Gamma_V_ell(gV,mV,mEll,mN,U):
     xh=mV/mN
     xEll=mEll/mN
