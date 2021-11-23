@@ -279,7 +279,7 @@ def dsigma_dcos_Theta_nucleon(anti_nu,nucleon,U,mN,Enu,cos_Theta,branch=1):
     PN=np.sqrt(EN**2-mN**2)
     t=mN**2-2*(Enu*EN -Enu*PN*cos_Theta)
 
-    assert(t+2*mN*(Enu-EN)<1E-6)
+    assert(np.abs( t+2*MP*(Enu-EN) )<1E-6)
 
     dAbst_dcos_Theta=2*Enu*PN
     
@@ -311,7 +311,7 @@ def dsigma_dcos_Theta_nucleon(anti_nu,nucleon,U,mN,Enu,cos_Theta,branch=1):
     C= 0.25*(FA**2+F1**2+eta*F2**2)
 
 
-    dsigma_dt= GF**2*MP**2*VUD**2/(8*np.pi*Enu**2)*(A +sgn*(s-u)/MP**2*B+(s-u)**2/MP**4*C)
+    dsigma_dt= U**2*GF**2*MP**2*VUD**2/(8*np.pi*Enu**2)*(A +sgn*(s-u)/MP**2*B+(s-u)**2/MP**4*C)
 
                                                     
 
@@ -368,6 +368,8 @@ def n_dsigma_dcos_Theta(U, mN, Enu, cos_Theta, Zed,  A_minus_Z, R1, S, num_dens,
         
         d_sig_d_cos_coh = dsigma_dcos_Theta_coherent(U,mN,Enu,cos_Theta,Qw)
         N_dsigma_dcos_Theta = num_dens * d_sig_d_cos_coh * FF2
+
+        
     if scattering_channel=="nucleon":
         #
         # Nucleon level scattering
