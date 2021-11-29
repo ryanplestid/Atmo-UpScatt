@@ -304,7 +304,12 @@ def energyOut(Enu,cos_Theta,mN,M_target,root_choice=1):
     '''
 
     M=M_target
-    kappa= (mN - 4*Enu*M*mN**2 - 4*M**2*mN**2 + 4*Enu**2*(M**2 - mN**2))/(4.*Enu**2*mN**2)
+    if mN>0:
+        kappa= (mN - 4*Enu*M*mN**2 - 4*M**2*mN**2 + 4*Enu**2*(M**2 - mN**2))/(4.*Enu**2*mN**2)
+    elif mN==0:
+        kappa=1
+    else:
+        assert(mN>=0,"HNL mass cannot be negative")
 
     # parameters of relevant quadratic equation for E_nu 
     a=4*(-((-1 + cos_Theta**2)*Enu**2) + 2*Enu*M + M**2)
@@ -317,9 +322,9 @@ def energyOut(Enu,cos_Theta,mN,M_target,root_choice=1):
         elif cos_Theta<=0:
             return( (-b-np.sqrt(b**2-4*a*c))/(2*a) )
     if kappa<0:
-        if branch=1:
+        if branch==1:
             return( (-b+np.sqrt(b**2-4*a*c))/(2*a) )
-        elif branch=2:
+        elif branch==2:
             return( (-b-np.sqrt(b**2-4*a*c))/(2*a) )
         else:
             print("You did not input a branch value of 1 or 2")

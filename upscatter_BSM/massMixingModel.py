@@ -1,4 +1,20 @@
 def main():
+
+    U=0.1
+    mN=0
+    Enu=0.1
+    cos_Theta=0
+
+    anti_nu="nu"
+    sigma_final_nucleon=0
+    sigma_final_coherent=0
+    for i in range(0,20):
+        sigma_final_nucleon+=8*dsigma_dcos_Theta_nucleon(anti_nu,"proton",U,mN,Enu,-1+i/10.0,branch=1)*0.1 \
+            + 8*dsigma_dcos_Theta_nucleon(anti_nu,"neutron",U,mN,Enu,-1+i/10.0,branch=1)*0.1
+        sigma_final_coherent+=dsigma_dcos_Theta_coherent(U,mN,Enu,-1+i/10.0,8)*0.1
+
+    print("Nucleon cross section:", sigma_final_nucleon)
+    print("Coherent cross section:", sigma_final_coherent)
     print("Hello World")
     return 0
 
@@ -15,7 +31,7 @@ MUP=1.79;
 MUN=-1.86;
 MP=0.94; # Neutron and proton treated as having same mass
 MA=1;
-MV=0.84;
+MV=0.71;
 
 SW=np.sqrt(0.229);
 VUD=0.975;
@@ -73,7 +89,7 @@ def Gamma_tot(flav,mN,U):
 
     Gamma_List=[ Gamma_3nu(mN,U), \
                  Gamma_2e_nu(flav,mN,U),\
-                 Gamma_2mu_nu(flav,mN,U)\
+                 Gamma_2mu_nu(flav,mN,U),\
                  Gamma_e_mu_nu(flav,mN,U),\
                  Gamma_pi_nu(mN,U),\
                  Gamma_eta_nu(mN,U),\
@@ -123,52 +139,52 @@ def Gamma_partial(flav,mN,U,final_state="nu e e"):
         Computes the decay rate of an HNL summed over all channels below ~ 1 GeV
 
     '''
-    if final_state="nu e e":
+    if final_state =="nu e e":
         return(Gamma_2e_nu(flav,mN,U))
 
-    elif final_state="nu mu mu":
+    elif final_state =="nu mu mu":
         return(Gamma_2mu_nu(flav,mN,U))
 
-    elif final_state="nu e mu":
+    elif final_state=="nu e mu":
         return(Gamma_e_mu_nu(flav,mN,U))
 
-    elif final_state="nu nu nu":
+    elif final_state=="nu nu nu":
         return( Gamma_3nu(mN,U))
 
-    elif final_state="pi nu":
+    elif final_state=="pi nu":
         return( Gamma_pi_nu(mN,U))
 
-    elif final_state="eta nu": 
+    elif final_state=="eta nu": 
         return( Gamma_eta_nu(mN,U))
 
-    elif final_state="eta' nu": 
+    elif final_state=="eta' nu": 
         return( Gamma_eta_prime_nu(mN,U))
 
-    elif final_state="rho nu": 
+    elif final_state=="rho nu": 
         return( Gamma_rho_nu(mN,U))
 
-    elif final_state="omega nu": 
+    elif final_state=="omega nu": 
         return( Gamma_omega_nu(mN,U))
 
-    elif final_state="phi nu": 
+    elif final_state=="phi nu": 
         return( Gamma_phi_nu(mN,U))
 
-    elif final_state="pi e": 
+    elif final_state=="pi e": 
         return( Gamma_pi_e(flav,mN,U))
 
-    elif final_state="pi mu": 
+    elif final_state=="pi mu": 
         return( Gamma_pi_mu(flav,mN,U))
 
-    elif final_state="K e": 
+    elif final_state=="K e": 
         return( Gamma_K_e(flav,mN,U))
 
-    elif final_state="K mu": 
+    elif final_state=="K mu": 
         return( Gamma_K_mu(flav,mN,U))
 
-    elif final_state="rho e": 
+    elif final_state=="rho e": 
         return( Gamma_rho_e(flav,mN,U))
 
-    elif final_state="rho mu": 
+    elif final_state=="rho mu": 
         return( Gamma_rho_mu(flav,mN,U))
 
     else:
@@ -227,7 +243,7 @@ def dsigma_dcos_Theta_coherent(U,mN,Enu,cos_Theta,Qw):
     EN=Enu
     t = (2*EN**2 - mN**2 - 2*EN*np.sqrt(EN**2 - mN**2) * cos_Theta) #Transfered momentum^2 (GeV^2)
 
-    dsigma_dt= U**2*GF**2*Qw**2*Enu**2/(2*np.pi)*(1-0.25*mN**2/Enu**2+0.25*t/Enu**2)
+    dsigma_dt= U**2*GF**2*Qw**2/(2*np.pi)*(1-0.25*mN**2/Enu**2+0.25*t/Enu**2)
     dAbst_dcos_Theta=2*EN*np.sqrt(EN**2-mN**2)
     Inv_Gev_to_cm = (0.1973) * 1e-13 # (GeV^-1 to fm) * (fm to cm)
 
@@ -270,8 +286,10 @@ def dsigma_dcos_Theta_nucleon(anti_nu,nucleon,U,mN,Enu,cos_Theta,branch=1):
 
     if anti_nu=="nu":
         sgn=1
-    if anti_nu=="nu_bar":
+    elif anti_nu=="nu_bar":
         sgn=-1
+    else:
+        print("Options for antinu are 'nu' or 'nu_bar'")
 
     #Only works with the high energy branch in the case of forward scattering
     EN=sampleEvents.energyOut(Enu,cos_Theta,mN,MP,branch)
@@ -283,7 +301,7 @@ def dsigma_dcos_Theta_nucleon(anti_nu,nucleon,U,mN,Enu,cos_Theta,branch=1):
 
     dAbst_dcos_Theta=2*Enu*PN
     
-    s=2 *Enu*MP+MP**2
+    s=2*Enu*MP+MP**2
     u=2*MP**2+mN**2-s-t
 
 
@@ -304,14 +322,14 @@ def dsigma_dcos_Theta_nucleon(anti_nu,nucleon,U,mN,Enu,cos_Theta,branch=1):
     FA=0.5*gA*tau3/(1-t/MA**2)**2-FAs/2
 
     FP=4*MP**2*gA/(MPI**2-t)
-
+    
     A=(mN**2-t)/MP**2 *( (1+eta)*FA**2-(1-eta)*F1**2+eta*(1-eta)*F2**2+4*eta*F1*F2\
                          -0.25*mN**2/MP**2*( (F1+F2)**2+(FA+2*FP)**2-(4-t/MP**2)*FP**2) )
     B= -t/MP**2*FA*(F1+F2)
     C= 0.25*(FA**2+F1**2+eta*F2**2)
 
 
-    dsigma_dt= U**2*GF**2*MP**2*VUD**2/(8*np.pi*Enu**2)*(A +sgn*(s-u)/MP**2*B+(s-u)**2/MP**4*C)
+    dsigma_dt= U**2*GF**2*MP**2*VUD**2/(8*np.pi*Enu**2)*(A + B*sgn*(s-u)/MP**2  +  C*(s-u)**2/MP**4)
 
                                                     
 
@@ -470,8 +488,6 @@ def Gamma_e_mu_nu(flav,mN,U):
 
     if flav=="tau":
         return(0)
-    else:
-        continue
     
     if x1+x2>=1:
         return(0)
