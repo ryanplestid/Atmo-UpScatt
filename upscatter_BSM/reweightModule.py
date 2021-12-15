@@ -3,8 +3,10 @@ from numpy import sin, cos, pi
 from numpy import random as rand 
 import scipy as sp
 from scipy import special as spc
-import matplotlib #Package to help with plotting
+import matplotlib as mpl #Package to help with plotting
 from matplotlib import pyplot as plt
+plt.style.use(['science','ieee'])
+
 from matplotlib import ticker, cm
 import pickle
 
@@ -65,7 +67,7 @@ def Update_Fluxes(filename,threshold):
     for event in Event_list:
         trial += 1
         
-        if trial % 10000 == 0:
+        if trial % 1000 == 0:
             print(trial)
             
         if event.dR < min_dR:
@@ -168,9 +170,12 @@ def ReIntegrate(filename,d,m_N,alpha_decay,V_det = None, flavors = ['E','EBar','
     l_det = (V_det)**(1/3) / R_Earth_cm # units of R_Earth = 1
     Energies = np.zeros(len(Event_list))
     dRs = np.zeros(len(Event_list))
+    N_Fluxes = np.zeros(len(Event_list))
     X_vect_vals = np.zeros((len(Event_list),3))
+    N_sigma_cos_Thetas = np.zeros(len(Event_list))
+    cos_Thetas = np.zeros(len(Event_list))
     
-    tot_integral = 0
+    
     trial = 0
     for event in Event_list:
         Energies[trial] = event.N_Energy
@@ -203,28 +208,121 @@ def ReIntegrate(filename,d,m_N,alpha_decay,V_det = None, flavors = ['E','EBar','
         tot_delta = R_Earth_cm* Energy_range * Cos_Theta_range * Earth_Volume * weights / len(Event_list)
         N_d_sigma_d_cos_Theta = Incoherent_Module.N_Cross_Sec_from_radii(d,m_N,event.nu_Energy,
                                                                          event.cos_Theta,event.r)
+        
+        N_sigma_cos_Thetas[trial] = N_d_sigma_d_cos_Theta
+        cos_Thetas[trial] = event.cos_Theta
+        '''
         tot_integral += (N_d_sigma_d_cos_Theta *4*pi*tot_flux 
                          * (P_dec_A_Perp)/(4*pi*event.Dist_to_det**2) * tot_delta)
+        '''
         dRs[trial] = (N_d_sigma_d_cos_Theta *4*pi*tot_flux 
                          * (P_dec_A_Perp)/(4*pi*event.Dist_to_det**2) * tot_delta)
         
+        N_Fluxes[trial] = (N_d_sigma_d_cos_Theta *4*pi*tot_flux 
+                         * np.exp(-event.Dist_to_det/N_lambda) /(4*pi*event.Dist_to_det**2) * tot_delta)
+        
         trial += 1
-       
-    cos_zeta_primes = DetectorModule.Calc_cos_zeta_prime(len(Event_list),alpha_decay)
-    zetas, E_gammas = DetectorModule.Calc_Zetas_and_Energies(cos_zeta_primes, Energies, m_N)
-    cos_phi_dets = DetectorModule.Calc_cos_phi_det(Y, X_vect_vals, zetas)
+
     
+    #N_sigma_cos_Thetas.sort()
+    #print('min N sigma cos Thetas', N_sigma_cos_Thetas[0:100])
+    E_N_bounds = np.logspace(-1.1,3.5,51)
+    E_N_midpoints = (E_N_bounds[:-1] * E_N_bounds[1:])**(1/2)
+    Flux_EN = np.zeros(len(E_N_midpoints))
+    Decay_Flux_EN = np.zeros(len(E_N_midpoints))
+    
+    #print('std dev ind', np.std(dRs)*len(dRs))
+    #print('std dev all', np.std(dRs)*np.sqrt(len(dRs)))
+    #print('total rate', sum(dRs))
+    for e_index in range(len(Energies)):
+        E_N = Energies[e_index]
+        N_Flux = N_Fluxes[e_index]
+        dR = dRs[e_index]
+        Flux_EN += N_Flux * np.heaviside(E_N - E_N_bounds[:-1],1)*np.heaviside(E_N_bounds[1:] - E_N,0)
+        Decay_Flux_EN += dR * np.heaviside(E_N - E_N_bounds[:-1],1)*np.heaviside(E_N_bounds[1:] - E_N,0)
+    '''
+    fig = plt.figure()
+    plt.bar(E_N_midpoints, Decay_Flux_EN,width = np.diff(E_N_bounds), alpha = 0.5)
+    plt.xlabel('E_N (GeV)')
+    plt.ylabel('Decay Flux (1/(s cm^2))')
+    plt.yscale('log')
+    plt.xscale('log')
+    plt.title('mN ='+ str(m_N) + 'd = '+str(d))
+    
+    
+    fig = plt.figure()
+    plt.hist(dRs, bins = np.logspace(-16,-7,20), alpha = 0.5)
+    plt.title('mN ='+ str(m_N) + 'd = '+str(d))
+    plt.xlabel('dR')
+    plt.ylabel('count')
+    plt.xscale('log')
+    plt.yscale('log')
+    plt.title('d ='+str(d)+' m_N='+str(m_N) +' Exponential Sampling')
+    '''
+    '''
+    fig = plt.figure()
+    x_bins = np.logspace(-2,2,20)
+    y_bins = np.logspace(-11,-7,20)
+    plt.hist2d(Energies,dRs,[x_bins,y_bins],cmax = 100)
+    plt.xscale('log')
+    plt.yscale('log')
+    plt.xlabel('$E_{/gamma}$')
+    plt.ylabel('dR')
+    '''
+    
+    
+    
+    '''
+    fig2 = plt.figure()
+    xbins = np.logspace(-1,3,21)
+    ybins = np.linspace(-1,1,11)
+    plt.hist2d(Energies,cos_phi_dets,[xbins,ybins], norm = mpl.colors.LogNorm())
+    plt.xscale('log')
+    plt.ylabel('$\cos\phi_{det}$')
+    plt.xlabel('$E_N$ (GeV)')
+    '''
     cos_phi_bounds = np.linspace(-1,1,11)
     cos_phi_midpoints = (cos_phi_bounds[:10] + cos_phi_bounds[1:])/2
     angular_rates = np.zeros(len(cos_phi_midpoints))
     
-    for e_index in range(len(cos_phi_dets)):
-        cos_phi = cos_phi_dets[e_index]
-        dR = dRs[e_index]
-        if E_gammas[e_index] > 0.030:
-            for phi_index in range(len(angular_rates)):
-                if cos_phi_bounds[phi_index] < cos_phi and cos_phi < cos_phi_bounds[phi_index + 1]:
-                    angular_rates[phi_index] += dR
+    E_gamma_bounds = np.linspace(0.03, 1.33 ,11)
+    E_gamma_midpoints = (E_gamma_bounds[:10] + E_gamma_bounds[1:])/2
+    E_gamma_rates = np.zeros(len(E_gamma_midpoints))
+    
+    Used_dRs = np.array([])
+    
+    tot_integral = 0
+    high_E_rate = 0
+    
+    for i in range(10):
+    
+        cos_zeta_primes = DetectorModule.Calc_cos_zeta_prime(len(Event_list),alpha_decay)
+        zetas, E_gammas = DetectorModule.Calc_Zetas_and_Energies(cos_zeta_primes, Energies, m_N)
+        cos_phi_dets = DetectorModule.Calc_cos_phi_det(Y, X_vect_vals, zetas)
+        
+        for e_index in range(len(cos_phi_dets)):
+            cos_phi = cos_phi_dets[e_index]
+            E_gamma = E_gammas[e_index]
+            dR = dRs[e_index]/10
+            if E_gammas[e_index] > 0.030 and E_gammas[e_index] < 1.33:
+                tot_integral += dR
+                Used_dRs = np.append(Used_dRs,dR)
+                
+                for phi_index in range(len(angular_rates)):
+                    if cos_phi_bounds[phi_index] < cos_phi and cos_phi < cos_phi_bounds[phi_index + 1]:
+                        angular_rates[phi_index] += dR
+                
+                for energy_index in range(len(E_gamma_rates)):
+                    if E_gamma_bounds[energy_index] < E_gamma and E_gamma < E_gamma_bounds[energy_index+1]:
+                        E_gamma_rates[energy_index] += dR
+                        
+            if E_gamma > 1.33:
+                high_E_rate += dR
     print('Rate',tot_integral)
     
-    return(tot_integral,cos_phi_midpoints, angular_rates)
+    rate_error = np.std(Used_dRs)*np.sqrt(len(Used_dRs))
+    
+    print('Rate Error', rate_error)
+    
+    return(tot_integral,rate_error,cos_phi_midpoints, angular_rates, E_gamma_midpoints,E_gamma_rates,high_E_rate)
+
