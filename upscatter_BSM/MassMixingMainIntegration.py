@@ -2,6 +2,10 @@ def main():
     print("Hello World")
     return(0)
 
+'''
+    Module that performs the Monte Carlo integration for the HNL Mass Mixing portal.
+'''
+
 import numpy as np
 from numpy import sin, cos, pi
 from numpy import random as rand 
@@ -49,7 +53,6 @@ A_perp = (V_det)**(2/3) #cm^2
 l_det = (V_det)**(1/3) / R_Earth_cm # units of R_Earth = 1
 
 epsilon = 1e-7 #1 - cos(Theta_min)
-Theta_max = pi
 
 alpha_decay = 0 #Used for determining if the HNL is Dirac or Majoranna
 
@@ -87,7 +90,8 @@ def MassMixMonteCarlo(m_N_vals,U_vals,num_Events, scattering_channel, flav ='tau
             if m_N < m_nuc:
                 E_thresh = ((m_nuc * m_N**2) + m_N * (2* m_nuc**2 - m_N**2))/(2 * m_nuc**2 - 2* m_N**2)
             else:
-                E_thresh = ((m_nuc * m_N**2) + m_N * (-2* m_nuc**2 + m_N**2))/(2 * m_nuc**2 - 2* m_N**2)
+                #E_thresh = ((m_nuc * m_N**2) + m_N * (-2* m_nuc**2 + m_N**2))/(2 * m_nuc**2 - 2* m_N**2)
+                E_thresh = m_N**2/(2*m_nuc) + m_N + 0.1
 
             print(E_thresh)
             
@@ -95,18 +99,11 @@ def MassMixMonteCarlo(m_N_vals,U_vals,num_Events, scattering_channel, flav ='tau
         
             E_nus = SampleEvents.Sample_Neutrino_Energies(num_Events,E_min,E_max,power_law)
             
-            if scattering_channel == "nucleon":
-                '''
-                sin2_Theta_maxs = -(m_nuc/E_nus) + (m_N**2/(4* E_nus**2)) - (m_nuc/E_nus)**2 + (m_nuc/m_N)**2
-                #print('Sin2_max', sin2_Theta_maxs[0:100])
-                cos_Theta_maxs = -1 * np.heaviside(sin2_Theta_maxs-1,1) \
-                    + np.sqrt(np.abs(1 - sin2_Theta_maxs+.001))*np.heaviside(1 - sin2_Theta_maxs,0)
-                Theta_max = np.arccos(cos_Theta_maxs)
-                '''
+            if scattering_channel == "nucleon" or scattering_channel == "DIS":
                 kappas = (4* E_nus**2 * (m_nuc**2 - m_N**2) - 4*E_nus*m_nuc*m_N**2 - 4*m_nuc**2 * m_N**2 + m_N**4) \
                     /(4 * E_nus**2 * m_N**2)
                 
-                cos_Theta_maxs = -1 * np.heaviside(kappas,1) * (np.sqrt(abs(kappas))-.001)* np.heaviside(-kappas,0)
+                cos_Theta_maxs = -1 * np.heaviside(kappas,1) + (np.sqrt(abs(kappas))+.001)* np.heaviside(-kappas,0)
                 Theta_max = np.arccos(cos_Theta_maxs)
             if scattering_channel == "coherent":
                 Theta_max = pi * np.ones(len(E_nus))
@@ -117,26 +114,21 @@ def MassMixMonteCarlo(m_N_vals,U_vals,num_Events, scattering_channel, flav ='tau
             
             if scattering_channel == "coherent":
                 E_HNLs = E_nus
-            if scattering_channel == "nucleon":
+            if scattering_channel == "nucleon" or scattering_channel == "DIS":
                 m_scat = m_nuc
                 E_HNLs = np.zeros(len(E_nus))
                 for i in range(len(E_nus)):
                     E_HNLs[i] = SampleEvents.energyOut(E_nus[i], cos_Thetas[i], m_N,m_scat)
             lambdas = Mass_Mixing_Model.decay_length(flav,U,m_N, E_HNLs)
-            '''
-            print('EN',E_HNLs[0:100])
-            fig = plt.figure()
-            plt.hist(E_HNLs)
-            plt.yscale('log')
-            print('lambdas', lambdas[0:100])
-            '''
             
             if min(lambdas) > 10*R_Earth:
+                print('big decay lengths')
                 X_vect_vals = SampleEvents.Sample_Interaction_Locations(num_Events, Y, 10*R_Earth*np.ones(num_Events),R_min)
                 w_V = SampleEvents.weight_positions(Y,10*R_Earth*np.ones(num_Events), R_min)
             else:
                 X_vect_vals = SampleEvents.Sample_Interaction_Location_Exp(num_Events, Y, R_min, lambdas)
                 w_V = SampleEvents.Weight_Positions_Exp(Y,R_min,X_vect_vals,lambdas)
+            
             
             Radii = np.sqrt(X_vect_vals[:,0]**2 +X_vect_vals[:,1]**2 + X_vect_vals[:,2]**2) #cm
             rs = Radii/R_Earth #normalized radii
@@ -150,11 +142,12 @@ def MassMixMonteCarlo(m_N_vals,U_vals,num_Events, scattering_channel, flav ='tau
             
             #Calculate cross section x number density
             N_d_sigma_d_cos_Thetas = Mass_Mixing_Model.N_Cross_Sec_from_radii(U,m_N, E_nus, 
-                                                                              cos_Thetas, rs,E_HNLs, scattering_channel)
+                                                                              cos_Thetas, rs, scattering_channel)
             
             #Prob to decay in detector * Perpendicular Area
             Y_minus_X_mag = np.sqrt((Y[0] - X_vect_vals[:,0])**2 + (Y[1] - X_vect_vals[:,1])**2 + (Y[2] - X_vect_vals[:,2])**2)
             print(min(Y_minus_X_mag)/l_det, 'min distance/l_det')
+            print(max(Y_minus_X_mag)/l_det, 'max distance/l_det')
             P_decs_A_Perp = (np.exp(-Y_minus_X_mag/lambdas) *(1 - np.exp(-l_det/lambdas))
                              * A_perp)
             
@@ -164,6 +157,7 @@ def MassMixMonteCarlo(m_N_vals,U_vals,num_Events, scattering_channel, flav ='tau
             #Calculate weights for events
             E_Range = E_max - E_min
             cos_Theta_range = (1-epsilon) - cos(Theta_max)
+            print('min cos range',min(cos_Theta_range))
             Volume = 4*pi/3 * R_Earth ** 3
     
             w_E = SampleEvents.weight_Energy(E_nus, E_min, E_max, power_law)
@@ -252,9 +246,6 @@ def MassMixMonteCarlo(m_N_vals,U_vals,num_Events, scattering_channel, flav ='tau
         
         d_index += 1
     return(filename, Decays)
-
-
-#MassMixMonteCarlo([0.1],[0.1],int(1e5),"coherent")
 
 if __name__ == "__main__":
     main()
