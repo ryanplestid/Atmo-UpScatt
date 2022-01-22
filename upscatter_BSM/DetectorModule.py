@@ -2,8 +2,12 @@ def main():
     print('Hello World')
     return(0)
 
+'''
+    Module to calculate the observed properties of the photon from the HNL decay.
+    Made with the dipole coupling portal in mind.
+'''
 #Initialization
-import numpy as np #Package for array functions
+import numpy as np
 from numpy import random as rand
 from numpy import sin, cos
 from numpy import pi
@@ -32,6 +36,7 @@ def Calc_cos_zeta_prime(num_events,alpha_decay):
     chi = rand.rand(num_events)
     cos_zeta_primes = (1/alpha_decay)* (-1+ np.sqrt(1-alpha_decay*(2-alpha_decay-4*chi)))
     
+    
     return(cos_zeta_primes)
 
 def Calc_Zetas_and_Energies(cos_zeta_prime,En,mn):
@@ -51,17 +56,13 @@ def Calc_Zetas_and_Energies(cos_zeta_prime,En,mn):
         E_gamma: Energy of the photon in the lab frame in GeV
                 (float, same size as En)
     '''
-    #Calculate the sine of zeta prime
     sin_zeta_prime = np.sqrt(1-cos_zeta_prime**2)
     
-    #Calculate the tangent of zeta
     tan_zeta = (mn/En) * sin_zeta_prime/ (cos_zeta_prime + np.sqrt(1 - mn**2/En**2))
     
-    #Get zetas from tan(zeta), make sure it's in the right quadrant
     zeta = (np.arctan(tan_zeta) + pi*np.heaviside(-tan_zeta,0) 
             + pi * np.heaviside(-cos_zeta_prime - 1,1))
     
-    #Calculate the Energy of the photon in the lab frame
     E_gamma = (En/2) * (1+np.sqrt(1 - mn**2/En**2)*cos_zeta_prime)
     
     return(zeta, E_gamma)
@@ -93,26 +94,15 @@ def Calc_cos_phi_det(Y, X, zeta):
     X_cross_Y_mag = np.sqrt(X_cross_Y[:,0]**2 + X_cross_Y[:,1]**2 + X_cross_Y[:,2]**2)
     
     Y_dot_X = Y[0]*X[:,0] + Y[1]*X[:,1] + Y[2]*X[:,2]
-    '''
-    except:
-        X_mag = np.sqrt(X[0]**2 + X[1]**2 + X[2]**2)
-        
-        Y_minus_X_mag = np.sqrt((Y[0] - X[0])**2 + (Y[1] - X[1])**2 + (Y[2] - X[2])**2)
-        
-        X_cross_Y = np.cross(X,Y)
-        
-        X_cross_Y_mag = np.sqrt(X_cross_Y[0]**2 + X_cross_Y[1]**2 + X_cross_Y[2]**2)
-        
-        Y_dot_X = Y[0]*X[0] + Y[1]*X[1] + Y[2]*X[2]
-    '''
     
     first_term = (Y_mag**2 - Y_dot_X)/(Y_mag*Y_minus_X_mag)
     second_term = (X_mag**2 * Y_mag**2 - Y_dot_X**2)/(Y_mag * X_cross_Y_mag * Y_minus_X_mag)
 
     
     cos_phi_det = first_term* cos(zeta) + second_term*sin(zeta)*sin(psis)
-    
-    return(cos_phi_det)
+    #A negative is put in front of the answer to account for differences in
+    #   how Super-K defines angles
+    return(-cos_phi_det)
 
 def Rate_In_Each_Bin(min_E, max_E, num_E_bins, num_cos_bins, E_gamma, cos_phi_det, dR):
     '''
