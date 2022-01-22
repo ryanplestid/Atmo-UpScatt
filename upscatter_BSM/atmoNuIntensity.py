@@ -2,6 +2,10 @@ def main():
     print("Hello World")
     return 0
 
+'''
+Module determines the proper flux for our events.
+'''
+
 import nuflux #Package to accurately determine the flux of neutrinos at different energies and angles
 import numpy as np #Package for array functions
 from numpy import pi as pi
