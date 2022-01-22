@@ -1,12 +1,20 @@
 def main():
     print("Hello World")
     return(0)
+'''
+This module is sampling the properties of our events at the beginning of the 
+    Monte Carlo simulation
+'''
+
 
 #Initialization
-import numpy as np #Package for array functions
+import numpy as np 
 from numpy import random as rand
 from numpy import sin, cos
 from numpy import pi as pi
+import matplotlib 
+from matplotlib import pyplot as plt
+from scipy import special as spc
 
 def Sample_Neutrino_Energies(num_Events, E_min, E_max, power_law):
     '''
@@ -49,7 +57,9 @@ def weight_Energy(En, E_min, E_max, power_law):
     w_Energy = En**power_law / (kappa * (E_max - E_min))
     return(w_Energy)
 
-def Sample_cos_Theta(Num_Events, epsilon, Theta_max = pi ):
+
+
+def Sample_cos_Theta(Num_Events, epsilon, Theta_max = pi, power = 1 ):
     '''
     Samples cosines of the scattering angles according to a 1/(1-cos(Theta)) distribution
     
@@ -57,19 +67,34 @@ def Sample_cos_Theta(Num_Events, epsilon, Theta_max = pi ):
         Num_Events: number of scattering angles that we wish to sample (int)
         epsilon: our value of 1 - cos(Theta_min)
         Theta_max: maximum scattering angle possible for the interaction (float)
+        power: We wish to sample the scattering angles for a 
+            distribution (1 - cos(Theta))^(-1*power)
     
     returns:
         cos_Thetas: sampled scattering angles (array of length Num_Events, floats)
     '''
     cos_Theta_min = 1 - epsilon 
     cos_Theta_max = cos(Theta_max)
+    if power == 1:
+        
+        
+        chi = rand.rand(Num_Events)
     
-    chi = rand.rand(Num_Events)
+        cos_Thetas = 1 - (1-cos_Theta_min)**(1-chi) * (1-cos_Theta_max)**chi
 
-    cos_Thetas = 1 - (1-cos_Theta_min)**(1-chi) * (1-cos_Theta_max)**chi
+        
+    else:
+        norm_const = (1-power) / ((1- cos_Theta_min)**(1-power) - (1 - cos_Theta_max)**(1-power))
+        
+        chi = rand.rand(Num_Events)
+        
+        one_minus_cos_Theta = ((1-power)/norm_const * chi + (1 - cos_Theta_max))**(1/(1-power))
+        
+        cos_Thetas = 1 - one_minus_cos_Theta
+        
     return(cos_Thetas)
 
-def weight_cos_Theta(cos_Theta, epsilon, Theta_max = pi):
+def weight_cos_Theta(cos_Theta, epsilon, Theta_max = pi, power = 1):
     '''
     Determines the correct weights for our preferential sampling of scattering angles
     
@@ -77,15 +102,22 @@ def weight_cos_Theta(cos_Theta, epsilon, Theta_max = pi):
         cos_Theta: cosine of the scattering angle for a particular event (float or array of floats)
         epsilon: our value of 1 - cos(Theta_min)
         Theta_max: maximum scattering angle possible for the interaction (float)
+        power: We wish to sample the scattering angles for a 
+            distribution (1 - cos(Theta))^(-1*power)
     
     returns:
         w_Theta: the proper weight for the event (float same size as cos_Theta)
     '''
     cos_Theta_min = 1 - epsilon 
     cos_Theta_max = cos(Theta_max)
-    
-    w_Theta = np.log((1-cos_Theta_max)/(1-cos_Theta_min)) * (1-cos_Theta)/(cos_Theta_min - cos_Theta_max)
-    
+    if power == 1:
+        
+        
+        w_Theta = np.log((1-cos_Theta_max)/(1-cos_Theta_min)) * (1-cos_Theta)/(cos_Theta_min - cos_Theta_max)
+        
+    else:
+        norm_const = (1-power) / ((1- cos_Theta_min)**(1-power) - (1 - cos_Theta_max)**(1-power))
+        w_Theta = (1/norm_const) * (1 - cos_Theta)**power / (cos_Theta_max - cos_Theta_min)
     return(w_Theta)
 
 #Arbitrary Scattering Functions
@@ -155,7 +187,8 @@ def Arbitrary_Scattering_Weight(cos_Theta,cos_vals,frac_diff_cross_sec_vals):
 
 def Sample_Interaction_Locations(Num_Events, Y, R_max, R_min):
     '''
-    Sample locations within the Earth for neutrino dipole interactions
+    Sample locations within the Earth for neutrino dipole interactions.  Sample uniformly in
+        volume up to a distance R_max from the detector.
     
     args:
         Num_Events: Number of events that we would like to sample (int)
@@ -191,14 +224,15 @@ def Sample_Interaction_Locations(Num_Events, Y, R_max, R_min):
         
         x_mags = np.sqrt(x_vect_vals[:,0]**2 + x_vect_vals[:,1]**2 + x_vect_vals[:,2]**2)
         needed_indeces = (x_mags > R_Earth) 
-        needed_events = sum(needed_indeces) # indices
+        needed_events = sum(needed_indeces)
         #print(100 - 100 * needed_events/Num_Events, "% done")
         
     return(x_vect_vals)
 
 def weight_positions(Y,R_max, R_min):
     '''
-    Computes the proper weight for position sampling
+    Computes the proper weight for position sampling. Sample is uniform in
+        volume up to a distance R_max from the detector.
     args:
         Y: Cartesian coordinates of the detector location in units of R_Earth (3 element float array)
         R_max: Maximum distance for which we care about dipole interactions in units of R_Earth
@@ -288,6 +322,105 @@ def Sample_Neutrino_Entry_Position(X, Y, cos_Theta):
     W[:,1] = X[:,1] - v_in_hat[:,1] * v_in_mag
     W[:,2] = X[:,2] - v_in_hat[:,2] * v_in_mag
     return(W)
+
+def Sample_Interaction_Location_Exp(Num_Events, Y, R_min, N_lambdas):
+    '''
+    Sample locations within the Earth for neutrino dipole interactions taking exponential
+        decay into account
+    
+    args:
+        Num_Events: Number of events that we would like to sample (int)
+        Y: Cartesian coordinates of the detector location in units of R_Earth (3 element float array)
+        R_min: Minimum distance for which we care about dipole interaction
+            in units of R_Earth = 1 (float array with Num_Events elements)
+        N_lambdas: Decay lengths of the HNL in units of R_Earth (array of floats)
+    
+    returns:
+        x_vect_vals: Num_Events-by-3 array of the sampled locations for the neutrino
+                dipole interactions in units of R_Earth
+    '''
+    R_Earth = 1   # 6378.1 * 1000* 100    #Radius of the Earth (cm)
+    Y_mag = np.sqrt(np.dot(Y,Y))
+    R_max = R_Earth + Y_mag
+    
+    x_vect_vals = np.zeros((Num_Events,3)) #positions of interactions (cm)
+    needed_indeces = x_vect_vals[:,0] < 1 #indeces for which we still need to assign positions
+    needed_events = Num_Events
+    x_mags = np.zeros(Num_Events)
+    
+
+    all_r_primes = R_min - N_lambdas * np.log(1 - rand.rand(Num_Events) *(1 - np.exp((R_min-R_max)/N_lambdas)))
+    
+    
+    while needed_events > 0:
+        
+        r_primes = all_r_primes[needed_indeces]
+
+        
+        #max_cosines = 1 * np.heaviside(R_Earth - r_primes,1) + -r_primes/(2*R_Earth) * np.heaviside(r_primes-R_Earth,0)
+        max_cosines = 1 * np.heaviside(R_Earth - Y_mag - r_primes,1)
+        max_cosines += (((R_Earth**2 - Y_mag**2 - r_primes**2)/(2* Y_mag*r_primes)) 
+                        * np.heaviside(Y_mag + r_primes - R_Earth,0))
+        cos_theta_primes = -1 + (max_cosines+1)* rand.rand(needed_events)
+
+        theta_primes = np.arccos(cos_theta_primes)
+        phi_primes = 2*pi*rand.rand(needed_events)
+
+        #Find the vector from the spherical coordinate vals
+        x_vect_vals[needed_indeces,0] = Y[0] + r_primes*sin(theta_primes)*cos(phi_primes)
+        x_vect_vals[needed_indeces,1] = Y[1] + r_primes*sin(theta_primes)*sin(phi_primes)
+        x_vect_vals[needed_indeces,2] = Y[2] + r_primes*cos(theta_primes)
+        
+        x_mags = np.sqrt(x_vect_vals[:,0]**2 + x_vect_vals[:,1]**2 + x_vect_vals[:,2]**2)
+        
+        
+        det_dist = np.sqrt((Y[0]-x_vect_vals[:,0])**2 + (Y[1]-x_vect_vals[:,1])**2 
+                           + (Y[2] - x_vect_vals[:,2])**2)
+        needed_indeces = np.any([x_mags > R_Earth, det_dist < R_min],axis = 0) 
+        
+        needed_events = sum(needed_indeces)
+        
+    return(x_vect_vals)
+
+def Weight_Positions_Exp(Y,R_min,x_vect_vals,N_lambdas):
+    '''
+    Weights interaction positions for integration taking exponential decay into account
+    
+    args:
+        Y: Cartesian coordinates of the detector location in units of R_Earth (3 element array)
+        R_min: Minimum distance for which we care about dipole interaction in units of
+            R_Earth = 1 (float)
+        x_vect_vals: n-by-3 array of the sampled locations for the neutrino dipole
+            interactions in units of R_Earth
+        N_lambdas: Decay lengths of the HNL in units of R_Earth (array of floats)
+        
+    returns:
+        w_V: Positional weight (array of floats)
+    '''
+    
+    R_Earth = 1
+    Y_mag = np.sqrt(np.dot(Y,Y))
+    R_max = R_Earth + Y_mag
+    
+    V_Earth = 4*pi/3 * R_Earth**3
+    V_min = 4*pi/3 * R_min**3
+    r_primes_mag = np.sqrt((Y[0] - x_vect_vals[:,0])**2 + (Y[1] - x_vect_vals[:,1])**2
+                          + (Y[2] - x_vect_vals[:,2])**2)
+    
+    dV_dr = 0
+    dV_dr += 4*pi*r_primes_mag**2 * np.heaviside(R_Earth - Y_mag - r_primes_mag, 1)
+    
+    dV_dr += ((-pi * r_primes_mag)/Y_mag * (r_primes_mag - R_Earth - Y_mag) 
+              * (r_primes_mag + R_Earth - Y_mag)) * np.heaviside(Y_mag + r_primes_mag - R_Earth,0)
+    
+    total_R = Y_mag + R_Earth
+    
+    w_V = (N_lambdas *(1 - np.exp((R_min - R_max)/N_lambdas)) 
+           * np.exp((r_primes_mag - R_min)/N_lambdas) * 1/(R_max - R_min) * dV_dr * total_R)
+    
+    w_V = w_V / (4/3 * pi)
+    
+    return(w_V)
 
 def energyOut(Enu,cos_Theta,mN,M_target,root_choice=1):
     '''
