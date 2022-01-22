@@ -1,12 +1,16 @@
 def main():
     print("Hello World")
-    return 0
+    return 
+
+'''
+This module is specific for the HNL Dipole coupling portal.  It calculates the decay length
+    of the HNL and the scattering cross sections.
+'''
 
 #Initialization
 import numpy as np #Package for array functions
 import formFactorFit
 import earthComp
-import dipoleModel
 from numpy import random as rand
 from numpy import sin, cos
 Element_Dict = dict({"O": "8 16",
@@ -20,6 +24,72 @@ Element_Dict = dict({"O": "8 16",
                      "Mn": "25 55",
                      "Fe": "26 56",
                      "Ni": "28 58"})
+
+def decay_length(d,mn,En):
+    '''
+    Find the characteristic decay length of the lepton
+    
+    args:
+        d: dipole coupling constant in MeV^-1 (float)
+        mn: mass of the lepton in GeV (float)
+        En: Energy of the lepton in GeV (float or array of floats)
+    
+    returns:
+        Lambda: Characteristic decay length in units of R_earth=1 (float or array of floats, equal to the number of energies)
+        
+    action:
+        Calculates characteristic decay length according to Plestid, 2021
+    '''
+    
+    R_Earth = 1
+    mn_MeV = mn*1000  #Convert mass to MeV
+    En_MeV = En*1000  #Convert energy to MeV
+    Lambda = (R_Earth * (1.97e-9/d)**2 *(1/mn_MeV)**4 * (En_MeV/10) 
+              * np.sqrt((1-mn**2/En**2)/0.99) )#Decay lengths (cm)
+    
+    #Set decay length to 0 if mass is greater than energy
+    Lambda = Lambda * np.heaviside(En - mn,0)
+    
+    return(Lambda)
+
+
+def d_sigma_d_cos_Theta_coherent(d,mn,En,cos_Theta,Zed):
+    '''
+    Determine the differential cross section for a coherent scattering at a specified angle
+    
+    args:
+        d: dipole coupling constant in MeV^-1 (float)
+        mn: mass of the lepton in GeV (float)
+        En: Energy of the lepton in GeV (float or array of floats)
+        cos_Theta: cosine of the scattering angle (float, same size as En)
+        Zed: Atomic number (int)
+        
+    returns:
+        d_sigma_d_cos_Theta: differential upscattering cross section in cm^2 
+                            (float, same size as En)
+    
+    actions:
+        Computes the differential cross section in terms of MeV^{-2}, then
+        converts it to cm^2
+    '''
+    #Set differential cross section to 0 if the mass is greater than the energy
+    if mn >= En:
+        d_sigma_d_cos_Theta = 0
+        return(d_sigma_d_cos_Theta)
+    
+    alpha = 1/137 #Fine structure constant (SI Units)
+    En_MeV = En *1000  #Neutrino/HNL Energies in MeV
+    mn_MeV = mn*1000  #HNL mass in MeV
+    t = (2*En_MeV**2 - mn_MeV**2 - 2*En_MeV*np.sqrt(En_MeV**2 - mn_MeV**2) 
+          * cos_Theta) #Transfered momentum^2 (MeV^2)
+
+    leading_terms = (-2* np.sqrt(En_MeV**2 - mn_MeV**2) * Zed**2 * d**2 * alpha)/(t * En_MeV) #MeV^-4
+    second_terms = (4*En_MeV**2 - mn_MeV**2 + mn_MeV**4/t) #MeV^2
+    Inv_Mev_to_cm = (197.3) * 1e-13 # (MeV^-1 to fm) * (fm to cm)
+    d_sigma_d_cos_Theta = Inv_Mev_to_cm**2 * -leading_terms*second_terms #cm^2
+    
+    return(d_sigma_d_cos_Theta)
+
 
 def Calc_F1_F2(Q):
     '''
@@ -151,7 +221,7 @@ def d_sigma_d_cos_Theta_incoh(E_nu,cos_Theta, m_N,d,F1,F2):
         F1: Constant for nucleon
         F2: Constant for nucleon
     returns:
-        d_s_d_cos: differential cross section
+        d_s_d_cos: differential cross section (cm^2)
 
     '''
     m_p = 0.94 # Nucleon mass (GeV)
@@ -164,8 +234,8 @@ def d_sigma_d_cos_Theta_incoh(E_nu,cos_Theta, m_N,d,F1,F2):
     
     d_s_d_cos = d_s_d_t * d_t_d_cos #MeV^-2
     Inv_Mev_to_cm = (197.3) * 1e-13 # (MeV^-1 to fm) * (fm to cm)
-    d_s_d_cos = d_s_d_cos* (Inv_Mev_to_cm)**2 #cm^2
-    return(-d_s_d_cos)
+    d_s_d_cos = abs(d_s_d_cos* (Inv_Mev_to_cm)**2 )#cm^2
+    return(d_s_d_cos)
 
 def Full_N_d_sigma_d_cos_Theta(d, mn, E_nu, cos_Theta,
                                Zeds,As, R1s, Ss, num_dens):
@@ -199,7 +269,7 @@ def Full_N_d_sigma_d_cos_Theta(d, mn, E_nu, cos_Theta,
     #Calculate the transfered momentum
     E_N_coh_MeV = E_nu * 1000 #HNL Energy in MeV
     E_nu_MeV = E_nu *1000  #Neutrino Energies in MeV
-    mn_MeV = mn*1000  #Lepton mass in MeV
+    mn_MeV = mn*1000  #HNL mass in MeV
     t_coh_MeV = (2*E_nu_MeV*E_N_coh_MeV - mn_MeV**2 - 2*E_nu_MeV*np.sqrt(E_N_coh_MeV**2 - mn_MeV**2) 
           * cos_Theta) #Transfered momentum^2 (MeV^2)
     
@@ -212,12 +282,20 @@ def Full_N_d_sigma_d_cos_Theta(d, mn, E_nu, cos_Theta,
     (F1p,F2p,F1n,F2n) = Calc_F1_F2(q_incoh)
     
     #Calculate the coherent cross sections for Z = 1
-    d_sig_d_cos_coh = dipoleModel.d_sigma_d_cos_Theta_coherent(d,mn,E_nu,cos_Theta,1)
+    d_sig_d_cos_coh = d_sigma_d_cos_Theta_coherent(d,mn,E_nu,cos_Theta,1)
     
-    #Calculate the incoherent cross sections for Z = 1
+    #Calculate the incoherent cross sections for protons and neutrons
     d_sig_d_cos_pro = d_sigma_d_cos_Theta_incoh(E_nu,cos_Theta,mn,d,F1p,F2p)
     d_sig_d_cos_neut = d_sigma_d_cos_Theta_incoh(E_nu,cos_Theta,mn,d,F1n,F2n)
-    
+    '''
+    if d_sig_d_cos_coh < 0:
+        print('coh problem')
+    if d_sig_d_cos_pro < 0:
+        print('pro problem')
+    if d_sig_d_cos_neut < 0:
+        print('neut prob')
+    '''
+
     #Initialize the cross section as 0
     N_d_sigma_d_cos_Theta = 0
     
