@@ -1,12 +1,5 @@
 #Initialization
 
-#### Rcomment: I DONT THINK YOU NEED THESE 
-
-#import matplotlib #Package to help with plotting
-#from mpl_toolkits import mplot3d
-#from matplotlib import pyplot as plt
-#from matplotlib import ticker, cm
-
 
 import math
 import numpy as np #Package for array functions
@@ -76,13 +69,8 @@ def Calculate_Fermi_3P_FF2(Fermi_c, Fermi_z, Fermi_w, q_vals_fm):
         Calculates Form Factor squared and returns it
     '''
     #Constants
-
-    
-    #### Rcomment: I do not think you use e in this function, numpy handles i as 1j
-    
-    
     i = 1j
-    e = .303 #Elementary charge, Natural Units
+    #e = .303 #Elementary charge, Natural Units
     
     #Arrays and step sizes for the integration
     r_vals = np.linspace(0, 5*Fermi_c, 1000) #fm
@@ -92,16 +80,6 @@ def Calculate_Fermi_3P_FF2(Fermi_c, Fermi_z, Fermi_w, q_vals_fm):
 
     #Initialize the values of F^2(q) as 0
     Fermi_FF2 = np.zeros(len(q_vals_fm))
-
-
-
-    #### Rcomment: see if numpy or scipy has a fourier bessel transform built in.
-    ####           it is generally more reliable to use library functions than to
-    ####           code up your own
-    ####
-    ####           I just checked, and it looks like there isn't a base-library solution
-    ####           there is this https://pypi.org/project/hankel/
-
     
     #Calculate F^2(q) at specified values of q
     q_index = 0
@@ -210,12 +188,7 @@ def Find_Helm_Parameters(Zed,Fermi_c,Fermi_z, q_vals, Fermi_w = 0):
         Ra = Ra - dD_dRa *delta_Ra
         s = s - dD_ds * delta_s
         r0 = r0 - dD_dr0 *delta_r0
-        '''
-        plt.legend()
-        plt.ylabel('Form Factor^2')
-        plt.xlabel('q ($fm^{-1}$)')
-        plt.title('Fitting Helm Form Factor to 2 parameter Fermi')
-        '''
+
         #Calculate R1 with the improved parameters.
         R1 = np.sqrt(Ra**2+(7/3)*pi**2*r0**2 -5*s**2)
     return(R1,s)
@@ -254,7 +227,7 @@ def Helm_FF2(q_MeV,R1,s):
     '''
     q_fm = 1/197.3 * q_MeV #fm^-1
     FF2 = (3*spc.spherical_jn(1,q_fm*R1)/(q_fm*R1))**2 * np.exp(-(q_fm*s)**2)
-    #print(FF2)
+
     return(FF2)
 
 
