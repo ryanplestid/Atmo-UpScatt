@@ -2,6 +2,10 @@ def main():
     print("Hello World")
     return 0
 
+'''
+    Module that performs the Monte Carlo integration for the HNL dipole portal.
+'''
+
 import numpy as np
 from numpy import sin, cos, pi
 from numpy import random as rand 
