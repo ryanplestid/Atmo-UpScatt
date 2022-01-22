@@ -1,3 +1,9 @@
+'''
+Module made to reweight a Monte Carlo integration for the HNL dipole portal with a new
+    HNL mass and dipole coupling.  It requires the filename from a previous Monte Carlo integration
+    to run.
+'''
+
 import numpy as np
 from numpy import sin, cos, pi
 from numpy import random as rand 
@@ -11,15 +17,12 @@ from matplotlib import ticker, cm
 import pickle
 
 #Import modules that we made
-#import SampleEvents
 import dipoleModel
-import Incoherent_Module
 import atmoNuIntensity
 import earthComp
 import DetectorModule
 import oscillations
 import MainIntegration
-#from MainIntegration import filename_list, d_vals, m_N_vals, num_Events
 
 def Update_Fluxes(filename,threshold):
     '''
@@ -43,8 +46,7 @@ def Update_Fluxes(filename,threshold):
                   'Mu':[], 'MuBar':[],
                   'Tau':[], 'TauBar':[]}
     
-    N_Events = len(Event_list)
-    #print('N_Events',N_Events)
+    
     Rate = Meta_Data["Rate"]
     #min_dR = (Rate/N_Events) * threshold
     ###
@@ -67,7 +69,7 @@ def Update_Fluxes(filename,threshold):
     for event in Event_list:
         trial += 1
         
-        if trial % 1000 == 0:
+        if trial % 5000 == 0:
             print(trial)
             
         if event.dR < min_dR:
@@ -143,11 +145,19 @@ def ReIntegrate(filename,d,m_N,alpha_decay,V_det = None, flavors = ['E','EBar','
     args:
         filename: Name of the file that contains the necessary information (str)
         d: Dipole coupling constant (MeV^-1)
-        m_N = HNL mass (GeV)
+        m_N: HNL mass (GeV)
+        V_det: Volume of the detector in cm^3 (float).  If left as None, it will use the volume
+            given in the file.
         flavors: Flavors of neutrinos for which we are interested in the interactions
     
     returns:
-        tot_integral: Rate of decays in the detector (s^-1)
+        tot_integral: Rate of sub-GeV HNL events in the detector in s^{-1} (float)
+        rate_error: Uncertainty in the rate in s^{-1} (float)
+        cos_phi_midpoints: Midpoints of the bins in cos(phi_det) (array)
+        angular_rates: rate in each bin of cos(phi_det) in s^{-1} (array)
+        E_gamma_midpoints: Midpoints of the bins in photon energy in GeV (array)
+        E_gamma_rates: Rate in each bin of photon energy in s^{-1} (array)
+        high_E_rate: Rate of multi-GeV HNL events in the detector in s^{-1} (float)
 
     '''
     Sim_Dict = pickle.load(open(filename,"rb"))
@@ -182,6 +192,9 @@ def ReIntegrate(filename,d,m_N,alpha_decay,V_det = None, flavors = ['E','EBar','
         X_vect_vals[trial,:] = event.Interact_Pos
         
         N_lambda = dipoleModel.decay_length(d,m_N, event.N_Energy)
+        
+        if flavors == ['E','EBar','Mu','MuBar','Tau','TauBar']:
+            N_lambda = N_lambda/3
             
         P_dec_A_Perp = (np.exp(-event.Dist_to_det/N_lambda) * (1-np.exp(-l_det/N_lambda))
                         *A_perp)
@@ -206,15 +219,12 @@ def ReIntegrate(filename,d,m_N,alpha_decay,V_det = None, flavors = ['E','EBar','
         
         weights = event.E_weight * event.V_weight * event.Theta_weight
         tot_delta = R_Earth_cm* Energy_range * Cos_Theta_range * Earth_Volume * weights / len(Event_list)
-        N_d_sigma_d_cos_Theta = Incoherent_Module.N_Cross_Sec_from_radii(d,m_N,event.nu_Energy,
+        N_d_sigma_d_cos_Theta = dipoleModel.N_Cross_Sec_from_radii(d,m_N,event.nu_Energy,
                                                                          event.cos_Theta,event.r)
         
         N_sigma_cos_Thetas[trial] = N_d_sigma_d_cos_Theta
         cos_Thetas[trial] = event.cos_Theta
-        '''
-        tot_integral += (N_d_sigma_d_cos_Theta *4*pi*tot_flux 
-                         * (P_dec_A_Perp)/(4*pi*event.Dist_to_det**2) * tot_delta)
-        '''
+
         dRs[trial] = (N_d_sigma_d_cos_Theta *4*pi*tot_flux 
                          * (P_dec_A_Perp)/(4*pi*event.Dist_to_det**2) * tot_delta)
         
@@ -222,65 +232,7 @@ def ReIntegrate(filename,d,m_N,alpha_decay,V_det = None, flavors = ['E','EBar','
                          * np.exp(-event.Dist_to_det/N_lambda) /(4*pi*event.Dist_to_det**2) * tot_delta)
         
         trial += 1
-
     
-    #N_sigma_cos_Thetas.sort()
-    #print('min N sigma cos Thetas', N_sigma_cos_Thetas[0:100])
-    E_N_bounds = np.logspace(-1.1,3.5,51)
-    E_N_midpoints = (E_N_bounds[:-1] * E_N_bounds[1:])**(1/2)
-    Flux_EN = np.zeros(len(E_N_midpoints))
-    Decay_Flux_EN = np.zeros(len(E_N_midpoints))
-    
-    #print('std dev ind', np.std(dRs)*len(dRs))
-    #print('std dev all', np.std(dRs)*np.sqrt(len(dRs)))
-    #print('total rate', sum(dRs))
-    for e_index in range(len(Energies)):
-        E_N = Energies[e_index]
-        N_Flux = N_Fluxes[e_index]
-        dR = dRs[e_index]
-        Flux_EN += N_Flux * np.heaviside(E_N - E_N_bounds[:-1],1)*np.heaviside(E_N_bounds[1:] - E_N,0)
-        Decay_Flux_EN += dR * np.heaviside(E_N - E_N_bounds[:-1],1)*np.heaviside(E_N_bounds[1:] - E_N,0)
-    '''
-    fig = plt.figure()
-    plt.bar(E_N_midpoints, Decay_Flux_EN,width = np.diff(E_N_bounds), alpha = 0.5)
-    plt.xlabel('E_N (GeV)')
-    plt.ylabel('Decay Flux (1/(s cm^2))')
-    plt.yscale('log')
-    plt.xscale('log')
-    plt.title('mN ='+ str(m_N) + 'd = '+str(d))
-    
-    
-    fig = plt.figure()
-    plt.hist(dRs, bins = np.logspace(-16,-7,20), alpha = 0.5)
-    plt.title('mN ='+ str(m_N) + 'd = '+str(d))
-    plt.xlabel('dR')
-    plt.ylabel('count')
-    plt.xscale('log')
-    plt.yscale('log')
-    plt.title('d ='+str(d)+' m_N='+str(m_N) +' Exponential Sampling')
-    '''
-    '''
-    fig = plt.figure()
-    x_bins = np.logspace(-2,2,20)
-    y_bins = np.logspace(-11,-7,20)
-    plt.hist2d(Energies,dRs,[x_bins,y_bins],cmax = 100)
-    plt.xscale('log')
-    plt.yscale('log')
-    plt.xlabel('$E_{/gamma}$')
-    plt.ylabel('dR')
-    '''
-    
-    
-    
-    '''
-    fig2 = plt.figure()
-    xbins = np.logspace(-1,3,21)
-    ybins = np.linspace(-1,1,11)
-    plt.hist2d(Energies,cos_phi_dets,[xbins,ybins], norm = mpl.colors.LogNorm())
-    plt.xscale('log')
-    plt.ylabel('$\cos\phi_{det}$')
-    plt.xlabel('$E_N$ (GeV)')
-    '''
     cos_phi_bounds = np.linspace(-1,1,11)
     cos_phi_midpoints = (cos_phi_bounds[:10] + cos_phi_bounds[1:])/2
     angular_rates = np.zeros(len(cos_phi_midpoints))
@@ -325,4 +277,5 @@ def ReIntegrate(filename,d,m_N,alpha_decay,V_det = None, flavors = ['E','EBar','
     print('Rate Error', rate_error)
     
     return(tot_integral,rate_error,cos_phi_midpoints, angular_rates, E_gamma_midpoints,E_gamma_rates,high_E_rate)
+
 
