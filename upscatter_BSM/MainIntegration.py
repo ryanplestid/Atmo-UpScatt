@@ -18,11 +18,10 @@ import pickle
 
 #Import modules that we made
 import SampleEvents
-import dipoleModel
 import atmoNuIntensity
 import earthComp
 import DetectorModule
-import Incoherent_Module
+import dipoleModel
 
 #Make Event Class
 class Event :
@@ -43,9 +42,9 @@ flux_name= 'H3a_SIBYLL23C'
 
 R_Earth = 1  # use units where R_earth = 1
 R_Earth_cm = 6378.1 * 1000* 100    #Radius of the Earth (cm)
-c = 10 #R_max = c*lambda
-Y = np.array([0,0,0.9999*R_Earth])     #Location of our detector
-V_det = 32000 * (1e6)         #Volume of detector in cm^3
+c = 5 #R_max = c*lambda
+Y = np.array([0,0,.9999*R_Earth])     #Location of our detector
+V_det = 22500 * (1e6)         #Volume of detector in cm^3
 
 R_min = (V_det)**(1/3) / R_Earth_cm #minimum distance to detector in R_Earth = 1
 
@@ -107,7 +106,8 @@ def MonteCarlo(m_N_vals,d_vals,num_Events):
             lambdas = dipoleModel.decay_length(d,m_N,Energies)
             R_maxs = c*lambdas + np.ones(len(lambdas)) * 1.5 * R_min
             
-            X_vect_vals = SampleEvents.Sample_Interaction_Locations(num_Events, Y, R_maxs,R_min)
+            #X_vect_vals = SampleEvents.Sample_Interaction_Locations(num_Events, Y, R_maxs,R_min)
+            X_vect_vals = SampleEvents.Sample_Interaction_Location_Exp(num_Events, Y, R_min, lambdas)
             Radii = np.sqrt(X_vect_vals[:,0]**2 +X_vect_vals[:,1]**2 + X_vect_vals[:,2]**2) #cm
             rs = Radii/R_Earth #normalized radii
             cos_Thetas = SampleEvents.Sample_cos_Theta(num_Events, epsilon, Theta_max)
@@ -120,7 +120,7 @@ def MonteCarlo(m_N_vals,d_vals,num_Events):
             flux = atmoNuIntensity.calc_fluxes(Energies,cos_zeniths, flux_name) #Flux in GeV^-1 cm^-2 sr^-1 s^-1
             
             #Calculate cross section x number density
-            N_d_sigma_d_cos_Thetas = Incoherent_Module.N_Cross_Sec_from_radii(d,m_N,Energies,cos_Thetas,rs)
+            N_d_sigma_d_cos_Thetas = dipoleModel.N_Cross_Sec_from_radii(d,m_N,Energies,cos_Thetas,rs)
             
             #Prob to decay in detector * Perpendicular Area
             Y_minus_X_mag = np.sqrt((Y[0] - X_vect_vals[:,0])**2 + (Y[1] - X_vect_vals[:,1])**2 + (Y[2] - X_vect_vals[:,2])**2)
@@ -134,7 +134,8 @@ def MonteCarlo(m_N_vals,d_vals,num_Events):
             Volume = 4*pi/3 * R_Earth ** 3
     
             w_E = SampleEvents.weight_Energy(Energies, E_min, E_max, power_law)
-            w_V = SampleEvents.weight_positions(Y,R_maxs, R_min)
+            #w_V = SampleEvents.weight_positions(Y,R_maxs, R_min)
+            w_V = SampleEvents.Weight_Positions_Exp(Y,R_min,X_vect_vals,lambdas)
             w_Theta = SampleEvents.weight_cos_Theta(cos_Thetas,epsilon, Theta_max)
             tot_weight = (w_E * w_V * w_Theta)
             
@@ -157,7 +158,7 @@ def MonteCarlo(m_N_vals,d_vals,num_Events):
                                           flux_name,nu_flavors =[flavor])
     
             #Create a filename to save these events
-            filename = "mN_%.3g" %m_N+"_d_%.3g"%d+".events"
+            filename = "mN_%.3g" %m_N+"_d_%.3g"%d+"exp_other.events"
             #Make a list of events
             event_list = []
             for i in range(len(Energies)):
@@ -204,81 +205,3 @@ def MonteCarlo(m_N_vals,d_vals,num_Events):
         d_index += 1
     return(filename, Decays)
 
-
-'''
-figk, ax = plt.subplots(1,1)
-levels = np.logspace(-6,8,8)
-cp = ax.contourf(m_N_vals, d_vals, Decays * 86400 * 365 * 10, levels,locator = ticker.LogLocator(), cmap = cm.PuBu_r)
-figk.colorbar(cp)
-plt.ylabel('d ($MeV^{-1}$)', fontsize = 14)
-plt.yscale('log')
-plt.xlabel('$M_N$ (GeV)', fontsize = 14)
-plt.xscale('log')
-plt.suptitle('Total Decays over 10 years', fontsize = 16)
-plt.suptitle('Monte Carlo Total HNL Decays', fontsize = 16)
-plt.title(str(num_Events) + ' events, Super-K Volume, No Double Bang, Full Cross Sec')
-'''
-
-'''
-#Calculate what is seen by the detector
-m_N = 0.1 #GeV
-d = 2e-10 #MeV^-1
-filename, Decays = MonteCarlo([m_N],[d],100000)
-Sim_Dict = pickle.load(open(filename,"rb"))
-Meta_Data = Sim_Dict["MetaData"]
-Event_list = Sim_Dict["EventData"]
-Y = Meta_Data['Detector Location (r_Earth=1)']
-num_Events = len(Event_list)
-
-Energies = np.zeros(num_Events)
-dRs = np.zeros(num_Events)
-X_vect_vals = np.zeros((num_Events,3))
-index = 0
-for event in Event_list:
-    Energies[index] = event.N_Energy
-    X_vect_vals[index,:] = event.Interact_Pos
-    dRs[index] = event.dR
-    index += 1
-
-cos_zeta_primes = DetectorModule.Calc_cos_zeta_prime(num_Events,alpha_decay)
-zetas, E_gammas = DetectorModule.Calc_Zetas_and_Energies(cos_zeta_primes, Energies, m_N)
-cos_phi_dets = DetectorModule.Calc_cos_phi_det(Y, X_vect_vals, zetas)
-
-good_indeces = E_gammas > 0.030 #30 MeV threshold
-cos_phi_bounds = np.linspace(-1,1,11)
-cos_phi_midpoints = (cos_phi_bounds[:10] + cos_phi_bounds[1:])/2
-angular_rates = np.zeros(len(cos_phi_midpoints))
-
-for e_index in range(len(cos_phi_dets)):
-    cos_phi = cos_phi_dets[e_index]
-    dR = dRs[e_index]
-    if E_gammas[e_index] > 0.030:
-        for phi_index in range(len(angular_rates)):
-            if cos_phi_bounds[phi_index] < cos_phi and cos_phi < cos_phi_bounds[phi_index + 1]:
-                angular_rates[phi_index] += dR * 86400 * 365 * 10
-
-
-fig = plt.figure()
-plt.bar(cos_phi_midpoints, angular_rates)
-plt.xlabel('$\cos(\phi_{det})$')
-plt.ylabel('Rate')
-plt.suptitle('Photons in 10 Years for Angular bins')
-plt.title('$m_N$ =' + str(m_N) + ' GeV ; d =' + str(d) + ' $MeV^{-1}$ '+str(num_Events)+'Events')
-'''
-'''
-E_midpoints, cos_midpoints, rates = DetectorModule.Rate_In_Each_Bin(0,1.3, 5, 10,E_gammas, cos_phi_dets, dR)
-figk, ax = plt.subplots(1,1,figsize = (8,6))
-#levels = np.logspace(-3,3,20)
-cp = ax.contourf(cos_midpoints,E_midpoints,rates*86400*365*10)
-figk.colorbar(cp)
-plt.ylabel('Energy (GeV)')
-plt.xlabel('$\cos(\\theta_z)$')
-plt.ylim([min(E_midpoints),0.7])
-#plt.suptitle('Total events in each bin for 10 years',fontsize = 16)
-#plt.title('$m_N$ ='+str(m_N)+"GeV, d = "+str(d)+"$MeV^{-1}$",fontsize = 14)
-'''
-
-
-
-if __name__ == "__main__":
-    main()
