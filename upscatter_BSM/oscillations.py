@@ -1,3 +1,11 @@
+'''
+Module used for calculating the oscillation probabilities along a 1D path
+
+functions:
+    get_probs: Determines the probability of transitioning from one neutrino
+        flavor to another along a path with a specified electron density
+'''
+
 def main():
 
     x=np.linspace(0,6000,6000) # km 
