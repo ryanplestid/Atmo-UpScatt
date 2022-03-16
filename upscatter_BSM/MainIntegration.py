@@ -4,6 +4,12 @@ def main():
 
 '''
     Module that performs the Monte Carlo integration for the HNL dipole portal.
+    Functions:
+        MonteCarlo: runs the Monte Carlo integration at a specified HNL mass
+            and dipole coupling.
+    Classes:
+        Event: Object that contains necessary information for re-integrating
+            to calculate the rate for different parameters.
 '''
 
 import numpy as np
