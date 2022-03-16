@@ -1,5 +1,24 @@
 #Initialization
 
+'''
+Module to compute the form factors for nuclei to determine
+the contributions of coherent and incoherent scattering.
+
+functions:
+    Calculate_Fermi_3p_FF2: Calculates an array of the form-factor squared
+        at specified q values, computed via a 3-parameter Fermi model
+    Find_Helm_Parameters: Perform a fit of Helm form-factor parameters
+        to the array of form factors computed using the 3-parameter
+        Fermi model
+    Helm_FF2: Calculate the form-factor squared at a specified q value
+        in the Helm model
+dictionaries:
+    Element_Dict: Earth elements with their atomic numbers and molar
+        mass for their most common isotope.
+    Fermi_Dict: 3-parameter Fermi values for common Earth isotopes
+    Helm_Dict: Helm parameters for common Earth isotopes
+'''
+
 
 import math
 import numpy as np #Package for array functions
