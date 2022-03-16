@@ -4,6 +4,12 @@ def main():
 
 '''
 Module determines the proper flux for our events.
+
+Functions:
+    Calc_cos_zeniths: Calculate the zenith angle of the incoming neutrino
+        relative to the surface of the Earth.
+    calc_fluxes: Calculate the flavor dependent fluxes for a specified
+        energy, zenith angle, and flux model.
 '''
 
 import nuflux #Package to accurately determine the flux of neutrinos at different energies and angles
