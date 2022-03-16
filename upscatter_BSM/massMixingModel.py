@@ -1,8 +1,8 @@
 def main():
 
     U=0.1
-    mN=0
-    Enu=0.1
+    mN=0.1
+    Enu=100
     cos_Theta=0
 
     anti_nu="nu"
@@ -114,7 +114,6 @@ def Gamma_partial(flav,mN,U,final_state="nu e e"):
              mN:  mass of the HNL lepton in GeV (float)
               U:  mixing matrix element. 
     final_state:  string, default= "nu e e" 
-
                           options: "nu e e"
                                    "nu mu mu"
                                    "nu e mu"
@@ -131,13 +130,11 @@ def Gamma_partial(flav,mN,U,final_state="nu e e"):
                                    "K mu"
                                    "rho e"
                                    "rho mu" 
-
     returns:
            \Gamma(N-> final state) in units of GeV
     
     actions:
         Computes the decay rate of an HNL summed over all channels below ~ 1 GeV
-
     '''
     if final_state =="nu e e":
         return(Gamma_2e_nu(flav,mN,U))
@@ -296,8 +293,10 @@ def dsigma_dcos_Theta_nucleon(anti_nu,nucleon,U,mN,Enu,cos_Theta,branch=1):
 
     PN=np.sqrt(EN**2-mN**2)
     t=mN**2-2*(Enu*EN -Enu*PN*cos_Theta)
-
-    assert(np.abs( t+2*MP*(Enu-EN) )<1E-6)
+    
+    
+    error_limit = max(1e-6, abs(t)/1e7)
+    assert(np.abs( t+2*MP*(Enu-EN) )<error_limit)
 
     dAbst_dcos_Theta=2*Enu*PN
     
@@ -358,8 +357,8 @@ def n_dsigma_dcos_Theta(U, mN, Enu, cos_Theta, Zed,  A_minus_Z, R1, S, num_dens,
         Ss: Helm skin thicknesses in fm (array of floats, same size as Zeds)
         num_dens: number density of the nucleus in question
                 (array of floats, same size as Zeds)
-        sc_ch: Scattering channel, (string) default="nucleon" , 
-             options={"nucleon", "coherent", or "response_function"}
+        Scattering channel: (string) default="nucleon" , 
+             options={"nucleon", "coherent","DIS", or "response_function"}
         anti_nu: neutrino vs anti-neutrino (string) options-{"nu","nu_bar"}   
                   does not affect coherent cross section. 
         branch : Branch of the E_N solution function
@@ -376,16 +375,18 @@ def n_dsigma_dcos_Theta(U, mN, Enu, cos_Theta, Zed,  A_minus_Z, R1, S, num_dens,
         return(dsigma_dcos_Theta)
     
     #Calculate the transfered momentum
-    if scattering_channel=="coherent":
-        t = -(2*Enu**2 - mN**2 - 2*Enu*np.sqrt(Enu**2 - mN**2) * cos_Theta) #Transfered momentum^2 (GeV^2)
     
-        q = np.sqrt(-t)*1000 #Transfered momentum (MeV)
-        FF2 = formFactorFit.Helm_FF2(q,R1,S) #Form factors^2 for the transferred momentum
+    t_coherent = -(2*Enu**2 - mN**2 - 2*Enu*np.sqrt(Enu**2 - mN**2) * cos_Theta) #Transfered momentum^2 (GeV^2)
+    
+    q_coherent = np.sqrt(-t_coherent)*1000 #Transfered momentum (MeV)
+    FF2 = formFactorFit.Helm_FF2(q_coherent,R1,S) #Form factors^2 for the transferred momentum
+    if scattering_channel=="coherent":
+        
         
         Qw= Zed*(1-4*SW**2) + A_minus_Z  
         
         d_sig_d_cos_coh = dsigma_dcos_Theta_coherent(U,mN,Enu,cos_Theta,Qw)
-        N_dsigma_dcos_Theta = num_dens * d_sig_d_cos_coh * FF2
+        N_dsigma_dcos_Theta = num_dens * d_sig_d_cos_coh * FF2 
 
         
     if scattering_channel=="nucleon":
@@ -395,9 +396,21 @@ def n_dsigma_dcos_Theta(U, mN, Enu, cos_Theta, Zed,  A_minus_Z, R1, S, num_dens,
         # No form factor or anything
         # Could consider coulomb sum rule 
         N_dsigma_dcos_Theta = num_dens*(Zed*dsigma_dcos_Theta_nucleon(anti_nu,"proton",U,mN,Enu,cos_Theta,branch)\
-                                      +A_minus_Z*dsigma_dcos_Theta_nucleon(anti_nu,"neutron",U,mN,Enu,cos_Theta,branch) )
+                                      +A_minus_Z*dsigma_dcos_Theta_nucleon(anti_nu,"neutron",U,mN,Enu,cos_Theta,branch))\
+            *(1 - FF2)
         
+    
+    #This is a very simple version of DIS, but it only contributes to the rate
+    #   at an order of a few percent
+    if scattering_channel == "DIS":
+        s = 2 * Enu * MP + MP**2
+        if s < mN**2:
+            dsigma_dcos_Theta = 0
+        else:
+            dsigma_dcos_Theta = U**2 * 3E-39 * Enu/2 * np.sqrt(1 - mN**2 / s)
         
+        N_dsigma_dcos_Theta = num_dens * dsigma_dcos_Theta * (1-FF2)
+    
     if scattering_channel=="response":
         #
         # We can code somethnig up to sample t and omega 
@@ -415,10 +428,7 @@ def N_Cross_Sec_from_radii(U, mn, Enu, cos_Theta, rs, channel="nucleon" ):
     '''
     Determine the number density weighted differential cross section for  
     scattering at a specified angle with the radius of the interaction specified
-
     i.e.  \sum_i n_i(r)x d\sigma_i/ d\cos\Theta
-
-
     args:
         U: Mass mixing coupling
         mn: mass of the lepton in GeV (float)
@@ -457,7 +467,8 @@ def N_Cross_Sec_from_radii(U, mn, Enu, cos_Theta, rs, channel="nucleon" ):
                 Ss = formFactorFit.Helm_Dict[Element_Dict["Si"]]["s"]
             
             N_dsigma_dcos_Theta[r_index] += n_dsigma_dcos_Theta(U,mn,Enu[r_index],cos_Theta[r_index],
-                                                                         Zed, A_minus_Z, R1s, Ss, num_dens)
+                                                                         Zed, A_minus_Z, R1s, Ss, num_dens, 
+                                                                         scattering_channel = channel)
     
     return(N_dsigma_dcos_Theta)
 
@@ -503,7 +514,10 @@ def Gamma_2lep_nu(C1,C2,x,mN,U):
     if x>=0.5:
         return(0)
     else:
-        L=np.log(1-3*x**2-(1-x**2)*np.sqrt(1-4*x**2))-np.log(x**2*(1+np.sqrt(1-4*x**2)))
+        if mN < 0.2:
+            L=np.log(1-3*x**2-(1-x**2)*np.sqrt(1-4*x**2))-np.log(x**2*(1+np.sqrt(1-4*x**2)))
+        elif mN>= 0.2:
+            L = 6 * np.log(2*x) - np.log(x**2*(1+np.sqrt(1-4*x**2)))
         return(GF**2*mN**5*U**2/(192*np.pi**3)*(C1*((1-14*x**2-2*x**4-12*x**6)*np.sqrt(1-4*x**2) + \
                                                 12*x**4*(x**4-1)*L)\
                                             + 4*C2*(x**2*(2+10*x**2-12*x**4)*np.sqrt(1-4*x**2) +\
