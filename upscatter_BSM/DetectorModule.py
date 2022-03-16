@@ -5,6 +5,15 @@ def main():
 '''
     Module to calculate the observed properties of the photon from the HNL decay.
     Made with the dipole coupling portal in mind.
+    Functions:
+        Calc_cos_zeta_prime: Calculate cosine of angle between HNL and decay
+            photon in the rest frame.
+        Calc_Zetas_and_Energies: Calculate angle between the HNL and decay photon
+            and the energy of the decay photon in the lab frame
+        Calc_cos_phi_det: Calculate the angle between the the photon direction
+            and the zenith of the detector.
+        Rate_in_Each_Bin: Calculate the rate of photons observed in each energy
+            and angular bin.
 '''
 #Initialization
 import numpy as np
