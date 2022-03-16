@@ -4,6 +4,31 @@ def main():
 '''
 This module is sampling the properties of our events at the beginning of the 
     Monte Carlo simulation
+    
+    Functions:
+        Sample_Neutrino_Energies: Sample atmospheric neutrino energies according
+            to a power law.
+        weight_Energy: Calculate the proper weight for integrating over neutrino
+            energies when the energies were sampled according to a power law
+        Sample_cos_Theta: Sample HNL scattering angle according to a power law of
+            (1 - cos(Theta))
+        weight_cos_Theta: Calculate the proper weight for integrating over cosine
+            of HNL scattering angles when the angles were sampled according to (1 - cos(Theta))
+        Sample_Arbitrary_Scat_Angles: Sample HNL scattering angle according to an
+            arbitrary distribution (an array of the differential cross section is required)
+        Arbitrary_Scattering_Weight: Calculate the weight for integrating over HNL scattering
+            angles for an arbitrary distribution.
+        Sample_Interaction_Location: Sample an interaction location for the neutrino
+            uniformly in space up to a specified maximum distance from the detector
+        weight_positions: Calculate weight for integrating over interaction positions
+            when positions are sampled uniformly in space
+        Sample_Neutrino_Entry_Position: Use the neutrino interaction position and 
+            HNL scattering angle to sample the entry position of the neutrino
+        Sample_Interaction_Location_Exp: Sample neutrino interaction position according
+            to a probability exponentially decaying with distance from the detector
+        Weight_Positions_Exp: Calculate weight for integrating over positions when sampled
+            as an exponential decay in the distance from the detector
+        energyOut: Calculate the energy of the HNL after the scattering event
 '''
 
 
