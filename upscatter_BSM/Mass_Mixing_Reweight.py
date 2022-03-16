@@ -2,6 +2,11 @@
 Module made to reweight a Monte Carlo integration for the HNL mass-mixing portal with a new
     HNL mass and coupling strength.  It requires the filename from a previous Monte Carlo 
     integration to run.
+    
+Functions:
+    ReIntegrate: Recalculates the expected rate of visible events for a specified HNL mass
+        and U coupling, given the filename from a previously run Monte Carlo with 
+        similar parameters.
 '''
 
 import numpy as np
