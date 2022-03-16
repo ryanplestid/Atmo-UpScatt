@@ -2,6 +2,13 @@
 Module made to reweight a Monte Carlo integration for the HNL dipole portal with a new
     HNL mass and dipole coupling.  It requires the filename from a previous Monte Carlo integration
     to run.
+
+Functions:
+    Update_Fluxes: Changes the flavor dependent fluxes of an event to account for oscillations
+    ReIntegrate: Recalculates the expected rate of visible events for a specified HNL mass
+        and dipole coupling, given the filename from a previously run Monte Carlo with 
+        similar parameters.
+        
 '''
 
 import numpy as np
