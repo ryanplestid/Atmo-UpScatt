@@ -1,3 +1,24 @@
+'''
+Module to calculate details about the composition of Earth
+
+functions:
+    which_layer: Specifies the layer of the Earth given the radius
+    rho_PREM: Compute the density of Earth at a given radius
+        according to the Preliminary Reference Earth Model
+    rho_Const: Returns a constant density as long as the specified
+        radius is within Earth
+    n_density: Calculates the number density of each element at
+        a specified radius
+    gen_1d_ne: Calculate a 1 dimensional profile of the number
+        density of electrons between two points
+        
+dictionaries:
+    molar_mass: Molar masses of Earth elements
+    atomic_number: Atomic number of Earth elements
+    neutron_number: Neutron number for Earth elements
+            
+'''
+
 import numpy as np
 import warnings
 
