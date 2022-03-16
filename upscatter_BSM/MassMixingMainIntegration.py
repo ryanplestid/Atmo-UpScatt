@@ -4,6 +4,13 @@ def main():
 
 '''
     Module that performs the Monte Carlo integration for the HNL Mass Mixing portal.
+    Functions:
+        MassMixMonteCarlo: Performs the Monte Carlo integration to calculate the rate
+            of observed decaysfor a specified HNL mass, U coupling value, and 
+            scattering channel
+    Classes:
+        Event: Object that contains necessary information for re-integrating to
+            find the rate of observed decays for different parameters.
 '''
 
 import numpy as np
