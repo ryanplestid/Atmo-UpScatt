@@ -1,3 +1,23 @@
+'''
+Module to compute properties specific to the mass mixing model.
+Calculates decay lengths, branching ratios, and cross sections.
+
+Functions:
+    Gamma_tot: Calculates total decay rate
+    Gamma_partial: Returns decay rate for a specific channel
+    decay_length: Calculates the characteristic decay length
+    d_sigma_d_cos_Theta_coherent: Calculates the differential
+        cross section for coherently scattering off a nucleus
+    d_sigma_d_cos_Theta_nucleon: Calculate the differential
+        cross section for scattering off of a nucleon
+    n_d_sigma_d_cos_Theta: Calculate the cross section times
+        the number density of scattering targets (taking form factors
+        into account)
+    N_Cross_Sec_from_radii: Calculate the cross section times
+        the number density given the radius of the the
+        interaction location
+'''
+
 def main():
 
     U=0.1
