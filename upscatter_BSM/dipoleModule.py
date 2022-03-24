@@ -5,6 +5,24 @@ def main():
 '''
 This module is specific for the HNL Dipole coupling portal.  It calculates the decay length
     of the HNL and the scattering cross sections.
+Functions:
+    decay_length: Calculate the characteristic decay length of the HNL
+    d_sigma_d_cos_Theta_coherent: Calculate the differential cross section for
+        a neutrino scattering off of a nucleus coherently.
+    Calc_F1_F2: Calcuate the form factors of for protons and neutrons at a given
+        value of Q.
+    HNL_Energy: Determine the energy of the HNL after scattering
+    dEN_d_cos_Theta: Calculate derivative of HNL energy with respect to scattering angle
+    d_t_d_cos_Theta: Derivative of Mandelstam variable t with respect to scattering angle
+    d_sigma_d_t_incoh: Differential cross section with respect to Mandelstam variable t
+    d_sigma_d_cos_Theta: Differential cross section with respect to cosine
+        of scattering angle
+    Full_N_d_sigma_d_cos_Theta: Calculate the full differential cross section 
+        (coherent and incoherent) times the number density of nuclei for a given list 
+        of nuclei
+    N_Cross_Sec_from_radii: Calculate the full differential cross section times the 
+        number density of nuclei given the radius (radius determines the types of nuclei
+        and their number density).
 '''
 
 #Initialization
