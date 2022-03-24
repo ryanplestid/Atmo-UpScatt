@@ -31,7 +31,6 @@ This module is sampling the properties of our events at the beginning of the
         energyOut: Calculate the energy of the HNL after the scattering event
 '''
 
-
 #Initialization
 import numpy as np 
 from numpy import random as rand
@@ -447,7 +446,7 @@ def Weight_Positions_Exp(Y,R_min,x_vect_vals,N_lambdas):
     
     return(w_V)
 
-def energyOut(Enu,cos_Theta,mN,M_target,root_choice=1):
+def energyOut(Enu,cos_Theta,mN,M_target,branch=1):
     '''
     args: 
         Enu: Energy of incident neutrino
@@ -467,7 +466,7 @@ def energyOut(Enu,cos_Theta,mN,M_target,root_choice=1):
     elif mN==0:
         kappa=1
     else:
-        assert(mN>=0,"HNL mass cannot be negative")
+        assert mN<=0,"HNL mass cannot be negative"
 
     # parameters of relevant quadratic equation for E_nu 
     a=4*(-((-1 + cos_Theta**2)*Enu**2) + 2*Enu*M + M**2)
@@ -487,7 +486,7 @@ def energyOut(Enu,cos_Theta,mN,M_target,root_choice=1):
         else:
             print("You did not input a branch value of 1 or 2")
             return(0)
-        
+
 
 if __name__ == "__main__":
     main()
