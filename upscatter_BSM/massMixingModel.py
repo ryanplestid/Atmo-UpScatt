@@ -252,9 +252,11 @@ def dsigma_dcos_Theta_coherent(U,mN,Enu,cos_Theta,Qw):
         then converts it to cm^2
     '''
     #Set differential cross section to 0 if the mass is greater than the energy
+    '''
     if mN >= Enu:
         dsigma_dcos_Theta = 0
         return(dsigma_dcos_Theta)
+    '''
     
 
     EN=Enu
@@ -265,6 +267,14 @@ def dsigma_dcos_Theta_coherent(U,mN,Enu,cos_Theta,Qw):
     Inv_Gev_to_cm = (0.1973) * 1e-13 # (GeV^-1 to fm) * (fm to cm)
 
     dsigma_dcos_Theta = Inv_Gev_to_cm**2 *(dsigma_dt)*dAbst_dcos_Theta
+    
+    try:
+        bad_indices = mN > Enu
+        dsigma_dcos_Theta[bad_indices] = np.zeros(sum(bad_indices))
+    except:
+        if mN >= Enu:
+            dsigma_dcos_Theta = 0
+            return(dsigma_dcos_Theta)
     
     return(dsigma_dcos_Theta)
 
@@ -292,9 +302,11 @@ def dsigma_dcos_Theta_nucleon(anti_nu,nucleon,U,mN,Enu,cos_Theta,branch=1):
         converts it to cm^2
     '''
     #Set differential cross section to 0 if the mass is greater than the energy
+    '''
     if mN >= Enu:
         dsigma_dcos_Theta = 0
         return(dsigma_dcos_Theta)
+    '''
                                 
     if nucleon=="proton":
         tau3=+1
@@ -313,10 +325,6 @@ def dsigma_dcos_Theta_nucleon(anti_nu,nucleon,U,mN,Enu,cos_Theta,branch=1):
 
     PN=np.sqrt(EN**2-mN**2)
     t=mN**2-2*(Enu*EN -Enu*PN*cos_Theta)
-    
-    
-    error_limit = max(1e-6, abs(t)/1e7)
-    assert(np.abs( t+2*MP*(Enu-EN) )<error_limit)
 
     dAbst_dcos_Theta=2*Enu*PN
     
@@ -355,6 +363,36 @@ def dsigma_dcos_Theta_nucleon(anti_nu,nucleon,U,mN,Enu,cos_Theta,branch=1):
     Inv_Gev_to_cm = (0.1973) * 1e-13 # (GeV^-1 to fm) * (fm to cm)
     dsigma_dcos_Theta = Inv_Gev_to_cm**2 *(dsigma_dt)*dAbst_dcos_Theta
     
+     #Return zero cross section if mN > Enu or E_N is not well defined
+    try:
+        bad_indices = mN > Enu
+        dsigma_dcos_Theta[bad_indices] = np.zeros(sum(bad_indices))
+        
+        for E_HNL_index in range(len(EN)):
+            if not EN[E_HNL_index] > 0:
+                dsigma_dcos_Theta[E_HNL_index] = 0
+            else:
+                error_limit = max(1e-6, abs(t[E_HNL_index])/1e7)
+                error_string = 'E_nu' + str(Enu) + ' m_N' + str(mN) + ' cos '+str(cos_Theta)
+                print(error_string)
+                assert np.abs( t[E_HNL_index]+2*MP*(Enu[E_HNL_index]-EN) )<error_limit,error_string
+    except:
+        if mN >= Enu:
+            dsigma_dcos_Theta = 0
+            return(dsigma_dcos_Theta)
+        if not EN > 0:
+            dsigma_dcos_Theta = 0
+            return(dsigma_dcos_Theta)
+        else:
+            error_limit = max(1e-6, abs(t)/1e7)
+            error_string = 'E_nu' + str(Enu) + ' m_N' + str(mN) + ' cos '+str(cos_Theta)
+            assert np.abs( t+2*MP*(Enu-EN) )<error_limit, error_string
+    '''    
+    error_limit = max(1e-6, abs(t)/1e7)
+    assert(np.abs( t+2*MP*(Enu-EN) )<error_limit)
+    '''
+    
+    
     return(dsigma_dcos_Theta)
 
                                             
@@ -378,7 +416,7 @@ def n_dsigma_dcos_Theta(U, mN, Enu, cos_Theta, Zed,  A_minus_Z, R1, S, num_dens,
         num_dens: number density of the nucleus in question
                 (array of floats, same size as Zeds)
         Scattering channel: (string) default="nucleon" , 
-             options={"nucleon", "coherent","DIS", or "response_function"}
+             options={"nucleon", "coherent", "DIS" or "response_function"}
         anti_nu: neutrino vs anti-neutrino (string) options-{"nu","nu_bar"}   
                   does not affect coherent cross section. 
         branch : Branch of the E_N solution function
