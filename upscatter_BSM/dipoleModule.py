@@ -5,25 +5,6 @@ def main():
 '''
 This module is specific for the HNL Dipole coupling portal.  It calculates the decay length
     of the HNL and the scattering cross sections.
-    
-    Functions:
-        decay_length: Calculate the characteristic decay length of the HNL
-        d_sigma_d_cos_Theta_coherent: Calculate the differential cross section for
-            a neutrino scattering off of a nucleus coherently.
-        Calc_F1_F2: Calcuate the form factors of for protons and neutrons at a given
-            value of Q.
-        HNL_Energy: Determine the energy of the HNL after scattering
-        dEN_d_cos_Theta: Calculate derivative of HNL energy with respect to scattering angle
-        d_t_d_cos_Theta: Derivative of Mandelstam variable t with respect to scattering angle
-        d_sigma_d_t_incoh: Differential cross section with respect to Mandelstam variable t
-        d_sigma_d_cos_Theta: Differential cross section with respect to cosine
-            of scattering angle
-        Full_N_d_sigma_d_cos_Theta: Calculate the full differential cross section 
-            (coherent and incoherent) times the number density of nuclei for a given list 
-            of nuclei
-        N_Cross_Sec_from_radii: Calculate the full differential cross section times the 
-            number density of nuclei given the radius (radius determines the types of nuclei
-            and their number density).
 '''
 
 #Initialization
@@ -63,11 +44,23 @@ def decay_length(d,mn,En):
     R_Earth = 1
     mn_MeV = mn*1000  #Convert mass to MeV
     En_MeV = En*1000  #Convert energy to MeV
-    Lambda = (R_Earth * (1.97e-9/d)**2 *(1/mn_MeV)**4 * (En_MeV/10) 
-              * np.sqrt((1-mn**2/En**2)/0.99) )#Decay lengths (cm)
+    try:
+        Lambda = np.zeros(len(En))
+        good_indices = En >= mn
+        Lambda[good_indices] = (R_Earth * (1.97e-9/d)**2 *(1/mn_MeV)**4 \
+                                * (En_MeV[good_indices]/10) * \
+                                    np.sqrt((1-mn**2/En[good_indices]**2)/0.99) )#Decay lengths (cm)
+    
+    except:
+        if mn > En:
+            Lambda = 0
+        else:
+            Lambda= (R_Earth * (1.97e-9/d)**2 *(1/mn_MeV)**4 \
+                                * (En_MeV/10) * \
+                                    np.sqrt((1-mn**2/En**2)/0.99) )#Decay lengths (cm)
     
     #Set decay length to 0 if mass is greater than energy
-    Lambda = Lambda * np.heaviside(En - mn,0)
+    #Lambda = Lambda * np.heaviside(En - mn,0)
     
     return(Lambda)
 
@@ -106,6 +99,7 @@ def d_sigma_d_cos_Theta_coherent(d,mn,En,cos_Theta,Zed):
     second_terms = (4*En_MeV**2 - mn_MeV**2 + mn_MeV**4/t) #MeV^2
     Inv_Mev_to_cm = (197.3) * 1e-13 # (MeV^-1 to fm) * (fm to cm)
     d_sigma_d_cos_Theta = Inv_Mev_to_cm**2 * -leading_terms*second_terms #cm^2
+    
     
     return(d_sigma_d_cos_Theta)
 
@@ -331,6 +325,23 @@ def Full_N_d_sigma_d_cos_Theta(d, mn, E_nu, cos_Theta,
         N_d_sigma_d_cos_Theta += num_den * (d_sig_d_cos_coh * Zed**2 * FF2
                                             + d_sig_d_cos_pro * Zed * (1-FF2)
                                             + d_sig_d_cos_neut * (A-Zed) )
+        
+    #Remove cases where mn > E_nu or E_HNL is not greater than 0    
+    try:
+        bad_indices1 = mn > E_nu
+        N_d_sigma_d_cos_Theta[bad_indices1] = np.zeros(sum(bad_indices1))
+        
+    except:
+        ignore = 0
+    
+    try:
+        for E_HNL_index in range(len(E_N_incoh)):
+            if not E_N_incoh[E_HNL_index] > 0:
+                N_d_sigma_d_cos_Theta[E_HNL_index] = 0
+    except:
+        if not E_N_incoh > 0:
+            N_d_sigma_d_cos_Theta = 0
+                
     
     return(N_d_sigma_d_cos_Theta)
 
